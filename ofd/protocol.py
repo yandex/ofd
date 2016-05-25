@@ -22,6 +22,17 @@ class Byte(object):
         return self.STRUCT.unpack(data)[0]
 
 
+class VLN(object):
+    def __init__(self, name, maxlen=8):
+        self.name = name
+        self.maxlen = maxlen
+
+    def unpack(self, data):
+        if len(data) > self.maxlen:
+            raise ValueError('VLN actual size is greater than maximum')
+        return struct.unpack('<Q', data + '\x00' * (8 - len(data)))[0]
+
+
 class FVLN(object):
     def __init__(self, name, maxlen):
         self.name = name
