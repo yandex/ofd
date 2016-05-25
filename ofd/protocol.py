@@ -54,6 +54,7 @@ class SessionHeader(object):
     MAGIC, = struct.unpack('<I', bytearray.fromhex('2a08410a'))
     PVERS, = struct.unpack('<H', bytearray.fromhex('81a2'))
     PVERA, = struct.unpack('<H', bytearray.fromhex('0001'))
+    STRUCT = struct.Struct('<IHH16sHHH')
 
     def __init__(self, device_id, length, flags, crc):
         self.device_id = device_id
@@ -61,11 +62,22 @@ class SessionHeader(object):
         self.flags = flags
         self.crc = crc
 
+    def pack(self):
+        return self.STRUCT.pack(
+            self.MAGIC,
+            self.PVERS,
+            self.PVERA,
+            self.device_id,
+            self.length,
+            self.flags,
+            self.crc
+        )
+
     @classmethod
     def unpack_from(cls, data):
         if len(data) != 30:
             raise ValueError('data size must be 30')
-        pack = struct.unpack('<IHH16sHHH', data)
+        pack = cls.STRUCT.unpack(data)
 
         if pack[cls.MAGIC_ID] != cls.MAGIC:
             raise ValueError('invalid protocol signature')
