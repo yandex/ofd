@@ -44,8 +44,8 @@ class FVLN(object):
 
         pad = '\x00' * (9 - len(data))
         pos, num = struct.unpack('<bQ', data + pad)
-        d = decimal.Decimal(10)** +pos
-        q = decimal.Decimal(10)** -pos
+        d = decimal.Decimal(10) ** +pos
+        q = decimal.Decimal(10) ** -pos
         return (decimal.Decimal(num) / d).quantize(q)
 
 
@@ -89,7 +89,8 @@ class SessionHeader(object):
         return SessionHeader(*pack[cls.PVERA_ID + 1:])
 
     def __str__(self):
-        return 'SessionHeader(ps_version={:#x}, pa_version={:#x}, device_id="{}", length={}, flags={:#b}, crc={})'.format(
+        return 'SessionHeader(ps_version={:#x}, pa_version={:#x}, device_id="{}"\
+            , length={}, flags={:#b}, crc={})'.format(
             self.PVERS,
             self.PVERA,
             self.device_id,
