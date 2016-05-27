@@ -1,6 +1,8 @@
 # coding: utf8
 
 import array
+import crcmod
+import crcmod.predefined
 import decimal
 import struct
 
@@ -127,6 +129,19 @@ class FrameHeader(object):
         # Служебные данные 2.
         self.extra2 = extra2
 
+    def pack(self):
+        return self.STRUCT.pack(
+            self.length,
+            self.crc,
+            self.MSGTYPE,
+            self.doctype,
+            self.version,
+            self.extra1,
+            self.devnum,
+            self.docnum,
+            self.extra2
+        )
+
     @classmethod
     def unpack_from(cls, data):
         if len(data) != cls.STRUCT.size:
@@ -139,3 +154,8 @@ class FrameHeader(object):
             raise ValueError('invalid protocol version')
 
         return FrameHeader(pack[0], pack[1], pack[3], *pack[5:])
+
+    def recalculate_crc(self, body):
+        f = crcmod.predefined.mkPredefinedCrcFun('crc-ccitt-false')
+        pack = self.pack()
+        self.crc = f(pack[:2] + pack[4:] + body)
