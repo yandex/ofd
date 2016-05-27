@@ -1,3 +1,5 @@
+# coding: utf8
+
 import array
 import decimal
 import struct
@@ -97,3 +99,43 @@ class SessionHeader(object):
             self.flags,
             self.crc
         )
+
+
+class FrameHeader(object):
+    MSGTYPE_ID, VERSION_ID = (2, 4)
+    MSGTYPE = 0xa5
+    VERSION = 1
+    STRUCT = struct.Struct('<HHBBB2s8s3s12s')
+
+    def __init__(self, length, crc, doctype, extra1, devnum, docnum, extra2):
+        # Длина.
+        self.length = length
+        # Проверочный код.
+        self.crc = crc
+        # Тип сообщения протокола.
+        self.msgtype = self.MSGTYPE
+        # Тип фискального документа.
+        self.doctype = doctype
+        # Версия протокола.
+        self.version = self.VERSION
+        # Номер ФН.
+        self.devnum = devnum
+        # Номер ФД.
+        self.docnum = docnum
+        # Служебные данные 1.
+        self.extra1 = extra1
+        # Служебные данные 2.
+        self.extra2 = extra2
+
+    @classmethod
+    def unpack_from(cls, data):
+        if len(data) != 32:
+            raise ValueError('data size must be 32')
+        pack = cls.STRUCT.unpack(data)
+
+        if pack[cls.MSGTYPE_ID] != cls.MSGTYPE:
+            raise ValueError('invalid message type')
+        if pack[cls.VERSION_ID] != cls.VERSION:
+            raise ValueError('invalid protocol version')
+
+        return FrameHeader(pack[0], pack[1], pack[3], *pack[5:])
