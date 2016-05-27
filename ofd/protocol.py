@@ -79,7 +79,7 @@ class SessionHeader(object):
 
     @classmethod
     def unpack_from(cls, data):
-        if len(data) != 30:
+        if len(data) != cls.STRUCT.size:
             raise ValueError('data size must be 30')
         pack = cls.STRUCT.unpack(data)
 
