@@ -129,7 +129,7 @@ class FrameHeader(object):
 
     @classmethod
     def unpack_from(cls, data):
-        if len(data) != 32:
+        if len(data) != cls.STRUCT.size:
             raise ValueError('data size must be 32')
         pack = cls.STRUCT.unpack(data)
 
