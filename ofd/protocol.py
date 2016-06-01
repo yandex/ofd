@@ -26,6 +26,46 @@ class Byte(object):
         return self.STRUCT.unpack(data)[0]
 
 
+class U32(object):
+    def __init__(self, name):
+        self.name = name
+        self.maxlen = 4
+
+    def pack(self, data):
+        return struct.pack('<I', data)
+
+    def unpack(self, data):
+        return struct.unpack('<I', data)[0]
+
+
+class String(object):
+    def __init__(self, name, maxlen):
+        self.name = name
+        self.maxlen = maxlen
+
+    def pack(self, value):
+        return struct.pack('{}s'.format(len(value)), value.pack('cp866'))
+
+    def unpack(self, data):
+        if len(data) == 0:
+            return ''
+        if len(data) > self.maxlen:
+            raise ValueError('String actual size is greater than maximum')
+        return struct.unpack('{}s'.format(len(data)), data)[0].decode('cp866')
+
+
+class UnixTime(object):
+    def __init__(self, name):
+        self.name = name
+        self.maxlen = 4
+
+    def pack(self, time):
+        return struct.pack('<I', int(time))
+
+    def unpack(self, data):
+        return struct.unpack('<I', data)[0]
+
+
 class VLN(object):
     def __init__(self, name, maxlen=8):
         self.name = name
@@ -51,6 +91,27 @@ class FVLN(object):
         d = decimal.Decimal(10) ** +pos
         q = decimal.Decimal(10) ** -pos
         return (decimal.Decimal(num) / d).quantize(q)
+
+
+class STLV(object):
+    def __init__(self, name, maxlen):
+        self.name = name
+        self.maxlen = maxlen
+
+    def unpack(self, data):
+        if len(data) > self.maxlen:
+            raise ValueError('STLV actual size is greater than maximum')
+
+        result = []
+        while len(data) > 0:
+            ty, length = struct.unpack('<HH', data[:4])
+            doc = DOCUMENTS[ty]
+            value = doc.unpack(data[4:4 + length])
+
+            result.append({'name': doc.name, 'value': value})
+            data = data[4 + length:]
+
+        return result
 
 
 class SessionHeader(object):
@@ -93,7 +154,8 @@ class SessionHeader(object):
         return SessionHeader(*pack[cls.PVERA_ID + 1:])
 
     def __str__(self):
-        return 'SessionHeader(ps_version={:#x}, pa_version={:#x}, device_id="{}", length={}, flags={:#b}, crc={})'.format(
+        return 'SessionHeader(ps_version={:#x}, pa_version={:#x}, \
+            device_id="{}", length={}, flags={:#b}, crc={})'.format(
             self.PVERS,
             self.PVERA,
             self.device_id,
@@ -159,3 +221,96 @@ class FrameHeader(object):
         f = crcmod.predefined.mkPredefinedCrcFun('crc-ccitt-false')
         pack = self.pack()
         self.crc = f(pack[:2] + pack[4:] + body)
+
+
+DOCUMENTS = {
+    0001: STLV(u'Отчёт о фискализации', maxlen=658),
+    0003: STLV(u'Кассовый чек', maxlen=32768),
+    0007: STLV(u'Подтверждение оператора', maxlen=362),
+    1001: Byte(u'Автоматический режим'),
+    1002: Byte(u'Автономный режим'),
+    1003: String(u'Адрес банковского агента', maxlen=256),
+    1004: String(u'Адрес банковского субагента', maxlen=256),
+    1005: String(u'Адрес оператора по переводу денежных средств', maxlen=256),
+    1006: String(u'Адрес платежного агента', maxlen=256),
+    1007: String(u'Адрес платежного субагента', maxlen=256),
+    1008: String(u'Адрес покупателя', maxlen=64),
+    1009: String(u'Адрес расчетов', maxlen=256),
+    1010: VLN(u'Размер вознаграждения банковского агента (субагента)'),
+    1011: VLN(u'Размер вознаграждения платежного агента (субагента)'),
+    1012: UnixTime(u'Время, дата'),
+    1013: String(u'Заводской номер ККТ', maxlen=10),
+    1014: String(u'Значение типа строка', maxlen=64),
+    1015: U32(u'Значение типа целое'),
+    1016: String(u'ИНН оператора по переводу денежных средств', maxlen=12),
+    1017: String(u'ИНН ОФД', maxlen=12),
+    1018: String(u'ИНН пользователя', maxlen=12),
+    1019: String(u'Информационное cообщение', maxlen=64),
+    1020: VLN(u'ИТОГ'),
+    1021: String(u'Кассир', maxlen=64),
+    1022: Byte(u'Код ответа ОФД'),
+    1023: FVLN(u'Количество', maxlen=8),
+    1024: String(u'Наименование банковского агента', maxlen=64),
+    1025: String(u'Наименование банковского субагента', maxlen=64),
+    1026: String(u'Наименование оператора по переводу денежных средств', 64),
+    1027: String(u'Наименование платежного агента', maxlen=64),
+    1028: String(u'Наименование платежного субагента', maxlen=64),
+    1029: String(u'Наименование реквизита', maxlen=64),
+    1030: String(u'Наименование товара', maxlen=64),
+    1031: VLN(u'Наличными'),
+    1032: STLV(u'Налог', maxlen=33),
+    1033: STLV(u'Налоги', maxlen=33),
+    1034: FVLN(u'Наценка (ставка)', maxlen=8),
+    1035: VLN(u'Наценка (сумма)'),
+    1036: String(u'Номер автомата', maxlen=12),
+    1037: String(u'Номер ККТ', maxlen=20),
+    1038: U32(u'Номер смены'),
+    1039: String(u'Зарезервирован', maxlen=12),
+    1040: U32(u'Номер фискального документа'),
+    1041: String(u'Заводской номер фискального накопителя', maxlen=16),
+    1042: U32(u'Номер чека'),
+    1043: VLN(u'Общая стоимость позиции с учетом скидок и наценок'),
+    1044: String(u'Операция банковского агента', maxlen=24),
+    1045: String(u'операция банковского субагента', maxlen=24),
+    1046: String(u'ОФД', maxlen=64),
+    1047: STLV(u'Параметр настройки', maxlen=144),
+    1048: String(u'Пользователь', maxlen=64),
+    1049: String(u'Почтовый индекс', maxlen=6),
+    1050: Byte(u'Признак исчерпания ресурса ФН'),
+    1051: Byte(u'Признак необходимости срочной замены ФН'),
+    1052: Byte(u'Признак переполнения памяти ФН'),
+    1053: Byte(u'Признак превышения времени ожидания ответа ОФД'),
+    1054: Byte(u'Признак расчета'),
+    1055: Byte(u'Признак системы налогообложения'),
+    1056: Byte(u'Признак шифрования'),
+    1057: Byte(u'Применение платежными агентами (субагентами)'),
+    1058: Byte(u'Применение банковскими агентами (субагентами)'),
+    1059: STLV(u'Реквизиты товара', maxlen=132),
+    1060: String(u'Сайт налогового органа', maxlen=64),
+    1061: String(u'Сайт ОФД', maxlen=64),
+    1062: Byte(u'Зарезервирован'),
+    1063: FVLN(u'Скидка (ставка)', 8),
+    1064: VLN(u'Скидка (сумма)'),
+    1065: String(u'Сокращенное наименование налога', maxlen=10),
+    1066: String(u'Сообщение', maxlen=256),
+    1067: STLV(u'Сообщение оператора для ККТ', maxlen=216),
+    1068: STLV(u'Сообщение оператора для ФН', maxlen=169),
+    1069: STLV(u'Сообщение оператору', maxlen=328),
+    1070: FVLN(u'Ставка налога', maxlen=5),
+    1071: STLV(u'Сторно товара', maxlen=132),
+    1072: VLN(u'Сумма налога', maxlen=8),
+    1073: String(u'Телефон банковского агента', maxlen=19),
+    1074: String(u'Телефон платежного агента', maxlen=19),
+    1075: String(u'Телефон оператора по переводу денежных средств', maxlen=19),
+    1076: String(u'Тип сообщения', maxlen=64),
+    1077: String(u'Фискальный признак документа', maxlen=6),
+    1078: String(u'Фискальный признак оператора', maxlen=18),
+    1079: VLN(u'Цена за единицу'),
+    1080: String(u'Штриховой код EAN13', maxlen=16),
+    1081: VLN(u'Электронными'),
+    1082: String(u'Телефон банковского субагента', maxlen=19),
+    1083: String(u'Телефон платежного субагента', maxlen=19),
+    1084: STLV(u'Дополнительный реквизит', maxlen=328),
+    1085: String(u'Наименование дополнительного реквизита', maxlen=64),
+    1086: String(u'Значение дополнительного реквизита', maxlen=256),
+}
