@@ -44,7 +44,7 @@ class String(object):
         self.maxlen = maxlen
 
     def pack(self, value):
-        return struct.pack('{}s'.format(len(value)), value.pack('cp866'))
+        return struct.pack('{}s'.format(len(value)), value.encode('cp866'))
 
     def unpack(self, data):
         if len(data) == 0:
@@ -97,6 +97,9 @@ class STLV(object):
     def __init__(self, name, maxlen):
         self.name = name
         self.maxlen = maxlen
+
+    def pack(self, data):
+        return data
 
     def unpack(self, data):
         if len(data) > self.maxlen:
@@ -155,7 +158,7 @@ class SessionHeader(object):
 
     def __str__(self):
         return 'SessionHeader(ps_version={:#x}, pa_version={:#x}, \
-            device_id="{}", length={}, flags={:#b}, crc={})'.format(
+device_id="{}", length={}, flags={:#b}, crc={})'.format(
             self.PVERS,
             self.PVERA,
             self.device_id,
@@ -221,6 +224,20 @@ class FrameHeader(object):
         f = crcmod.predefined.mkPredefinedCrcFun('crc-ccitt-false')
         pack = self.pack()
         self.crc = f(pack[:2] + pack[4:] + body)
+
+    def __str__(self):
+        return 'FrameHeader(length={}, crc={}, msgtype="{}", doctype={}, \
+version={}, extra1={}, devnum={}, docnum={}, extra2={})'.format(
+            self.length,
+            self.crc,
+            self.MSGTYPE,
+            self.doctype,
+            self.version,
+            self.extra1,
+            self.devnum,
+            self.docnum,
+            self.extra2
+        )
 
 
 DOCUMENTS = {
