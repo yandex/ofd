@@ -7,9 +7,13 @@ import decimal
 import struct
 
 
+class InvalidProtocolSignature(RuntimeError):
+    pass
+
+
 def check_signature(data):
     if array.array('B', data) != array.array('B', [42, 8, 65, 10]):
-        raise RuntimeError('invalid protocol signature')
+        raise InvalidProtocolSignature()
 
 
 class Byte(object):
