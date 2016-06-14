@@ -74,7 +74,7 @@ class VLN(object):
     def unpack(self, data):
         if len(data) > self.maxlen:
             raise ValueError('VLN actual size is greater than maximum')
-        return struct.unpack('<Q', data + '\x00' * (8 - len(data)))[0]
+        return struct.unpack('<Q', data + b'\x00' * (8 - len(data)))[0]
 
 
 class FVLN(object):
@@ -86,7 +86,7 @@ class FVLN(object):
         if len(data) > self.maxlen:
             raise ValueError('FVLN actual size is greater than maximum')
 
-        pad = '\x00' * (9 - len(data))
+        pad = b'\x00' * (9 - len(data))
         pos, num = struct.unpack('<bQ', data + pad)
         d = decimal.Decimal(10) ** +pos
         q = decimal.Decimal(10) ** -pos
@@ -241,9 +241,9 @@ version={}, extra1={}, devnum={}, docnum={}, extra2={})'.format(
 
 
 DOCUMENTS = {
-    0001: STLV(u'Отчёт о фискализации', maxlen=658),
-    0003: STLV(u'Кассовый чек', maxlen=32768),
-    0007: STLV(u'Подтверждение оператора', maxlen=362),
+    1: STLV(u'Отчёт о фискализации', maxlen=658),
+    3: STLV(u'Кассовый чек', maxlen=32768),
+    7: STLV(u'Подтверждение оператора', maxlen=362),
     1001: Byte(u'Автоматический режим'),
     1002: Byte(u'Автономный режим'),
     1003: String(u'Адрес банковского агента', maxlen=256),
