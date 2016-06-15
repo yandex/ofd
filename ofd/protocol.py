@@ -125,8 +125,9 @@ class SessionHeader(object):
     PVERA, = struct.unpack('<H', bytearray.fromhex('0001'))
     STRUCT = struct.Struct('<IHH16sHHH')
 
-    def __init__(self, device_id, length, flags, crc):
-        self.device_id = device_id
+    def __init__(self, fn_id, length, flags, crc):
+        # Номер ФН.
+        self.fn_id = fn_id
         self.length = length
         self.flags = flags
         self.crc = crc
@@ -136,7 +137,7 @@ class SessionHeader(object):
             self.MAGIC,
             self.PVERS,
             self.PVERA,
-            self.device_id,
+            self.fn_id,
             self.length,
             self.flags,
             self.crc
@@ -159,10 +160,10 @@ class SessionHeader(object):
 
     def __str__(self):
         return 'SessionHeader(ps_version={:#x}, pa_version={:#x}, \
-device_id="{}", length={}, flags={:#b}, crc={})'.format(
+fn_id="{}", length={}, flags={:#b}, crc={})'.format(
             self.PVERS,
             self.PVERA,
-            self.device_id,
+            self.fn_id,
             self.length,
             self.flags,
             self.crc
