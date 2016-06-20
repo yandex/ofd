@@ -32,10 +32,12 @@ class U32(object):
         self.name = name
         self.maxlen = 4
 
-    def pack(self, data):
+    @staticmethod
+    def pack(data):
         return struct.pack('<I', data)
 
-    def unpack(self, data):
+    @staticmethod
+    def unpack(data):
         return struct.unpack('<I', data)[0]
 
 
@@ -44,7 +46,8 @@ class String(object):
         self.name = name
         self.maxlen = maxlen
 
-    def pack(self, value):
+    @staticmethod
+    def pack(value):
         return struct.pack('{}s'.format(len(value)), value.encode('cp866'))
 
     def unpack(self, data):
@@ -60,10 +63,12 @@ class UnixTime(object):
         self.name = name
         self.maxlen = 4
 
-    def pack(self, time):
+    @staticmethod
+    def pack(time):
         return struct.pack('<I', int(time))
 
-    def unpack(self, data):
+    @staticmethod
+    def unpack(data):
         return struct.unpack('<I', data)[0]
 
 
@@ -99,7 +104,8 @@ class STLV(object):
         self.name = name
         self.maxlen = maxlen
 
-    def pack(self, data):
+    @staticmethod
+    def pack(data):
         return data
 
     def unpack(self, data):
