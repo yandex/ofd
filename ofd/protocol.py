@@ -6,6 +6,8 @@ import crcmod.predefined
 import decimal
 import struct
 
+VERSION = (1, 1, 0, 'ATOL-3')
+
 SIGNATURE = array.array('B', [42, 8, 65, 10]).tostring()
 
 
@@ -134,9 +136,9 @@ class SessionHeader(object):
     PVERA, = struct.unpack('<H', bytearray.fromhex('0001'))
     STRUCT = struct.Struct('<IHH16sHHH')
 
-    def __init__(self, fn_id, length, flags, crc):
+    def __init__(self, fs_id, length, flags, crc):
         # Номер ФН.
-        self.fn_id = fn_id
+        self.fs_id = fs_id
         self.length = length
         self.flags = flags
         self.crc = crc
@@ -146,7 +148,7 @@ class SessionHeader(object):
             self.MAGIC,
             self.PVERS,
             self.PVERA,
-            self.fn_id,
+            self.fs_id,
             self.length,
             self.flags,
             self.crc
@@ -168,15 +170,13 @@ class SessionHeader(object):
         return SessionHeader(*pack[cls.PVERA_ID + 1:])
 
     def __str__(self):
-        return 'SessionHeader(ps_version={:#x}, pa_version={:#x}, \
-fn_id="{}", length={}, flags={:#b}, crc={})'.format(
+        return 'SessionHeader(ps_version={:#x}, pa_version={:#x}, fs_id="{}", length={}, flags={:#b}, crc={})'.format(
             self.PVERS,
             self.PVERA,
-            self.fn_id,
+            self.fs_id,
             self.length,
             self.flags,
-            self.crc
-        )
+            self.crc)
 
 
 class FrameHeader(object):
