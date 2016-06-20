@@ -31,8 +31,9 @@ class Byte(object):
 
 
 class U32(object):
-    def __init__(self, name):
+    def __init__(self, name, desc):
         self.name = name
+        self.desc = desc
         self.maxlen = 4
 
     @staticmethod
@@ -100,14 +101,15 @@ class FVLN(object):
         pos, num = struct.unpack('<bQ', data + pad)
         d = decimal.Decimal(10) ** +pos
         q = decimal.Decimal(10) ** -pos
-        return (decimal.Decimal(num) / d).quantize(q)
+        return float((decimal.Decimal(num) / d).quantize(q))
 
 
 class STLV(object):
-    def __init__(self, name, desc, maxlen):
+    def __init__(self, name, desc, maxlen, cardinality='1'):
         self.name = name
         self.desc = desc
         self.maxlen = maxlen
+        self.cardinality = cardinality
 
     @staticmethod
     def pack(data):
@@ -117,13 +119,20 @@ class STLV(object):
         if len(data) > self.maxlen:
             raise ValueError('STLV actual size is greater than maximum')
 
-        result = []
+        if self.cardinality == '1':
+            result = {}
+        else:
+            result = []
+
         while len(data) > 0:
             ty, length = struct.unpack('<HH', data[:4])
             doc = DOCUMENTS[ty]
             value = doc.unpack(data[4:4 + length])
 
-            result.append({'name': doc.name, 'value': value, 'tag': ty})
+            if self.cardinality == '1':
+                result[doc.name] = value
+            else:
+                result.append({doc.name: value})
             data = data[4 + length:]
 
         return result
@@ -254,91 +263,91 @@ version={}, extra1={}, devnum={}, docnum={}, extra2={})'.format(
 DOCUMENTS = {
     1: STLV(u'fiscalReport', u'Отчёт о фискализации', maxlen=658),
     3: STLV(u'receipt', u'Кассовый чек', maxlen=32768),
-    7: STLV(u'<unknown>', u'Подтверждение оператора', maxlen=362),
+    7: STLV(u'<unknown-7>', u'Подтверждение оператора', maxlen=362),
     1001: Byte(u'autoMode', u'Автоматический режим'),
     1002: Byte(u'offlineMode', u'Автономный режим'),
-    1003: String(u'<unknown>', u'Адрес банковского агента', maxlen=256),
-    1004: String(u'<unknown>', u'Адрес банковского субагента', maxlen=256),
+    1003: String(u'<unknown-1003>', u'Адрес банковского агента', maxlen=256),
+    1004: String(u'<unknown-1004>', u'Адрес банковского субагента', maxlen=256),
     1005: String(u'operatorAddress', u'Адрес оператора по переводу денежных средств', maxlen=256),
-    1006: String(u'<unknown>', u'Адрес платежного агента', maxlen=256),
-    1007: String(u'<unknown>', u'Адрес платежного субагента', maxlen=256),
+    1006: String(u'<unknown-1006>', u'Адрес платежного агента', maxlen=256),
+    1007: String(u'<unknown-1007>', u'Адрес платежного субагента', maxlen=256),
     1008: String(u'buyerAddress', u'Адрес покупателя', maxlen=64),
     1009: String(u'retailPlaceAddress', u'Адрес расчетов', maxlen=256),
     1010: VLN(u'Размер вознаграждения банковского агента (субагента)'),
     1011: VLN(u'Размер вознаграждения платежного агента (субагента)'),
     1012: UnixTime(u'Время, дата'),
     1013: String(u'kktNumber', u'Заводской номер ККТ', maxlen=10),
-    1014: String(u'<unknown>', u'Значение типа строка', maxlen=64),
-    1015: U32(u'Значение типа целое'),
+    1014: String(u'<unknown-1014>', u'Значение типа строка', maxlen=64),
+    1015: U32(u'<unknown-1015>', u'Значение типа целое'),
     1016: String(u'operatorInn', u'ИНН оператора по переводу денежных средств', maxlen=12),
     1017: String(u'ofdInn', u'ИНН ОФД', maxlen=12),
     1018: String(u'userInn', u'ИНН пользователя', maxlen=12),
-    1019: String(u'<unknown>', u'Информационное cообщение', maxlen=64),
+    1019: String(u'<unknown-1019>', u'Информационное cообщение', maxlen=64),
     1020: VLN(u'ИТОГ'),
     1021: String(u'operator', u'Кассир', maxlen=64),
-    1022: Byte(u'<unknown>', u'Код ответа ОФД'),
+    1022: Byte(u'<unknown-1022>', u'Код ответа ОФД'),
     1023: FVLN(u'Количество', maxlen=8),
-    1024: String(u'<unknown>', u'Наименование банковского агента', maxlen=64),
-    1025: String(u'<unknown>', u'Наименование банковского субагента', maxlen=64),
+    1024: String(u'<unknown-1024>', u'Наименование банковского агента', maxlen=64),
+    1025: String(u'<unknown-1025>', u'Наименование банковского субагента', maxlen=64),
     1026: String(u'operatorName', u'Наименование оператора по переводу денежных средств', 64),
-    1027: String(u'<unknown>', u'Наименование платежного агента', maxlen=64),
-    1028: String(u'<unknown>', u'Наименование платежного субагента', maxlen=64),
-    1029: String(u'<unknown>', u'Наименование реквизита', maxlen=64),
+    1027: String(u'<unknown-1027>', u'Наименование платежного агента', maxlen=64),
+    1028: String(u'<unknown-1028>', u'Наименование платежного субагента', maxlen=64),
+    1029: String(u'<unknown-1029>', u'Наименование реквизита', maxlen=64),
     1030: String(u'name', u'Наименование товара', maxlen=64),
     1031: VLN(u'Наличными'),
-    1032: STLV(u'<unknown>', u'Налог', maxlen=33),
-    1033: STLV(u'<unknown>', u'Налоги', maxlen=33),
+    1032: STLV(u'<unknown-1032>', u'Налог', maxlen=33),
+    1033: STLV(u'<unknown-1033>', u'Налоги', maxlen=33),
     1034: FVLN(u'Наценка (ставка)', maxlen=8),
     1035: VLN(u'Наценка (сумма)'),
     1036: String(u'machineNumber', u'Номер автомата', maxlen=12),
     1037: String(u'kktRegId', u'Номер ККТ', maxlen=20),
-    1038: U32(u'Номер смены'),
-    1039: String(u'<unknown>', u'Зарезервирован', maxlen=12),
-    1040: U32(u'Номер фискального документа'),
+    1038: U32(u'shiftNumber', u'Номер смены'),
+    1039: String(u'<unknown-1039>', u'Зарезервирован', maxlen=12),
+    1040: U32(u'docId', u'Номер фискального документа'),
     1041: String(u'fiscalDriveNumber', desc=u'Заводской номер фискального накопителя', maxlen=16),
-    1042: U32(u'Номер чека'),
+    1042: U32(u'requestNumber', u'номер чека за смену'),
     1043: VLN(u'Общая стоимость позиции с учетом скидок и наценок'),
     1044: String(u'bankAgentOperation', u'Операция банковского агента', maxlen=24),
     1045: String(u'bankSubagentOperation', u'операция банковского субагента', maxlen=24),
-    1046: String(u'<unknown>', u'ОФД', maxlen=64),
-    1047: STLV(u'<unknown>', u'Параметр настройки', maxlen=144),
+    1046: String(u'<unknown-1046>', u'ОФД', maxlen=64),
+    1047: STLV(u'<unknown-1047>', u'Параметр настройки', maxlen=144),
     1048: String(u'user', u'Пользователь', maxlen=64),
-    1049: String(u'<unknown>', u'Почтовый индекс', maxlen=6),
+    1049: String(u'<unknown-1049>', u'Почтовый индекс', maxlen=6),
     1050: Byte(u'fiscalDriveExhaustionSign', u'Признак исчерпания ресурса ФН'),
     1051: Byte(u'fiscalDriveReplaceRequiredSign', u'Признак необходимости срочной замены ФН'),
     1052: Byte(u'fiscalDriveMemoryExceededSign', u'Признак переполнения памяти ФН'),
     1053: Byte(u'ofdResponseTimeoutSign', u'Признак превышения времени ожидания ответа ОФД'),
     1054: Byte(u'operationType', u'Признак расчета'),
-    1055: Byte(u'<unknown>', u'Признак системы налогообложения'),
+    1055: Byte(u'<unknown-1055>', u'Признак системы налогообложения'),
     1056: Byte(u'encryptionSign', u'Признак шифрования'),
-    1057: Byte(u'<unknown>', u'Применение платежными агентами (субагентами)'),
-    1058: Byte(u'<unknown>', u'Применение банковскими агентами (субагентами)'),
-    1059: STLV(u'items', u'наименование товара (реквизиты)', maxlen=132),
-    1060: String(u'<unknown>', u'Сайт налогового органа', maxlen=64),
-    1061: String(u'<unknown>', u'Сайт ОФД', maxlen=64),
+    1057: Byte(u'<unknown-1057>', u'Применение платежными агентами (субагентами)'),
+    1058: Byte(u'<unknown-1058>', u'Применение банковскими агентами (субагентами)'),
+    1059: STLV(u'items', u'наименование товара (реквизиты)', 132, '*'),
+    1060: String(u'<unknown-1060>', u'Сайт налогового органа', maxlen=64),
+    1061: String(u'<unknown-1061>', u'Сайт ОФД', maxlen=64),
     1062: Byte(u'taxationType', u'системы налогообложения'),  # TODO: Bitfields actually, read more.
     1063: FVLN(u'Скидка (ставка)', 8),
     1064: VLN(u'Скидка (сумма)'),
-    1065: String(u'<unknown>', u'Сокращенное наименование налога', maxlen=10),
+    1065: String(u'<unknown-1065>', u'Сокращенное наименование налога', maxlen=10),
     1066: String(u'message', u'Сообщение', maxlen=256),
-    1067: STLV(u'<unknown>', u'Сообщение оператора для ККТ', maxlen=216),
-    1068: STLV(u'<unknown>', u'Сообщение оператора для ФН', maxlen=169),
-    1069: STLV(u'message', u'Сообщение оператору', maxlen=328),
+    1067: STLV(u'<unknown-1067>', u'Сообщение оператора для ККТ', maxlen=216),
+    1068: STLV(u'<unknown-1068>', u'Сообщение оператора для ФН', maxlen=169),
+    1069: STLV(u'message', u'Сообщение оператору', 328, '*'),
     1070: FVLN(u'Ставка налога', maxlen=5),
-    1071: STLV(u'stornoItems', u'сторно товара (реквизиты)', maxlen=132),
+    1071: STLV(u'stornoItems', u'сторно товара (реквизиты)', 132, '*'),
     1072: VLN(u'Сумма налога', maxlen=8),
     1073: String(u'bankAgentPhone', u'Телефон банковского агента', maxlen=19),
     1074: String(u'paymentAgentPhone', u'Телефон платежного агента', maxlen=19),
-    1075: String(u'<unknown>', u'Телефон оператора по переводу денежных средств', maxlen=19),
+    1075: String(u'<unknown-1075>', u'Телефон оператора по переводу денежных средств', maxlen=19),
     1076: String(u'type', u'Тип сообщения', maxlen=64),
     1077: String(u'fiscalSign', u'Фискальный признак документа', maxlen=6),
-    1078: String(u'<unknown>', u'Фискальный признак оператора', maxlen=18),
+    1078: String(u'<unknown-1078>', u'Фискальный признак оператора', maxlen=18),
     1079: VLN(u'Цена за единицу'),
     1080: String(u'barcode', u'Штриховой код EAN13', maxlen=16),
     1081: VLN(u'Электронными'),
     1082: String(u'bankSubagentPhone', u'Телефон банковского субагента', maxlen=19),
     1083: String(u'paymentSubagentPhone', u'Телефон платежного субагента', maxlen=19),
-    1084: STLV(u'<unknown>', u'Дополнительный реквизит', maxlen=328),
+    1084: STLV(u'<unknown-1084>', u'Дополнительный реквизит', 328, '*'),
     1085: String(u'key', u'Наименование дополнительного реквизита', maxlen=64),
     1086: String(u'value', u'Значение дополнительного реквизита', maxlen=256),
 
