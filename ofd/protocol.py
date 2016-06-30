@@ -262,6 +262,7 @@ version={}, extra1={}, devnum={}, docnum={}, extra2={})'.format(
 
 DOCUMENTS = {
     1: STLV(u'fiscalReport', u'Отчёт о фискализации', maxlen=658),
+    2: STLV(u'unknown-2', u'Отчёт об открытии смены', maxlen=440),
     3: STLV(u'receipt', u'Кассовый чек', maxlen=32768),
     7: STLV(u'<unknown-7>', u'Подтверждение оператора', maxlen=362),
     1001: Byte(u'autoMode', u'Автоматический режим'),
