@@ -63,9 +63,28 @@ class String(object):
         return struct.unpack('{}s'.format(len(data)), data)[0].decode('cp866')
 
 
-class UnixTime(object):
-    def __init__(self, name):
+class ByteArray(object):
+    def __init__(self, name, desc, maxlen):
         self.name = name
+        self.desc = desc
+        self.maxlen = maxlen
+
+    @staticmethod
+    def pack(value):
+        return struct.pack('{}s'.format(len(value)), value)
+
+    def unpack(self, data):
+        if len(data) == 0:
+            return ''
+        if len(data) > self.maxlen:
+            raise ValueError('ByteArray actual size is greater than maximum')
+        return struct.unpack('{}s'.format(len(data)), data)[0]
+
+
+class UnixTime(object):
+    def __init__(self, name, desc):
+        self.name = name
+        self.desc = desc
         self.maxlen = 4
 
     @staticmethod
@@ -78,8 +97,9 @@ class UnixTime(object):
 
 
 class VLN(object):
-    def __init__(self, name, maxlen=8):
+    def __init__(self, name, desc, maxlen=8):
         self.name = name
+        self.desc = desc
         self.maxlen = maxlen
 
     def unpack(self, data):
@@ -89,8 +109,9 @@ class VLN(object):
 
 
 class FVLN(object):
-    def __init__(self, name, maxlen):
+    def __init__(self, name, desc, maxlen):
         self.name = name
+        self.desc = desc
         self.maxlen = maxlen
 
     def unpack(self, data):
@@ -179,13 +200,21 @@ class SessionHeader(object):
         return SessionHeader(*pack[cls.PVERA_ID + 1:])
 
     def __str__(self):
-        return 'SessionHeader(ps_version={:#x}, pa_version={:#x}, fs_id="{}", length={}, flags={:#b}, crc={})'.format(
-            self.PVERS,
-            self.PVERA,
-            self.fs_id,
-            self.length,
-            self.flags,
-            self.crc)
+        return 'Заголовок Сообщения сеансового уровня\n' \
+               '{:24}: {:#010x}\n' \
+               '{:24}: {:#06x}\n' \
+               '{:24}: {:#06x}\n' \
+               '{:24}: {}\n' \
+               '{:24}: {}\n' \
+               '{:24}: {:#b}\n' \
+               '{:24}: {}'.format(
+                    'Сигнатура', self.MAGIC,
+                    'Версия S-протокола', self.PVERS,
+                    'Версия A-протокола', self.PVERA,
+                    'Номер ФН', self.fs_id,
+                    'Размер тела', self.length,
+                    'Флаги', self.flags,
+                    'Проверочный код (CRC)', self.crc)
 
 
 class FrameHeader(object):
@@ -193,6 +222,7 @@ class FrameHeader(object):
     MSGTYPE = 0xa5
     VERSION = 1
     STRUCT = struct.Struct('<HHBBB2s8s3s12s')
+    STRUCT_TINY = struct.Struct('<BBB2s8s3s12s')
 
     def __init__(self, length, crc, doctype, extra1, devnum, docnum, extra2):
         # Длина.
@@ -208,7 +238,7 @@ class FrameHeader(object):
         # Номер ФН.
         self.devnum = devnum
         # Номер ФД.
-        self.docnum = docnum
+        self._docnum = docnum
         # Служебные данные 1.
         self.extra1 = extra1
         # Служебные данные 2.
@@ -223,7 +253,7 @@ class FrameHeader(object):
             self.version,
             self.extra1,
             self.devnum,
-            self.docnum,
+            self._docnum,
             self.extra2
         )
 
@@ -240,78 +270,106 @@ class FrameHeader(object):
 
         return FrameHeader(pack[0], pack[1], pack[3], *pack[5:])
 
+    @classmethod
+    def unpack_from_raw(cls, data):
+        """
+        Unpack container header directly from bytearray without `length` and `CRC` fields.
+        :param data: container header.
+        :return: structured ContainerHeader.
+        """
+        if len(data) != cls.STRUCT_TINY.size:
+            raise ValueError('data size must be 32')
+        pack = cls.STRUCT_TINY.unpack(data)
+
+        if pack[cls.MSGTYPE_ID - 2] != cls.MSGTYPE:
+            raise ValueError('invalid message type')
+        if pack[cls.VERSION_ID - 2] != cls.VERSION:
+            raise ValueError('invalid protocol version')
+
+        return FrameHeader(0, 0, pack[1], *pack[3:])
+
+    def docnum(self):
+        return struct.unpack('>I', b'\0' + self._docnum)[0]
+
     def recalculate_crc(self, body):
         f = crcmod.predefined.mkPredefinedCrcFun('crc-ccitt-false')
         pack = self.pack()
         self.crc = f(pack[:2] + pack[4:] + body)
 
     def __str__(self):
-        return 'FrameHeader(length={}, crc={}, msgtype="{}", doctype={}, \
-version={}, extra1={}, devnum={}, docnum={}, extra2={})'.format(
-            self.length,
-            self.crc,
-            self.MSGTYPE,
-            self.doctype,
-            self.version,
-            self.extra1,
-            self.devnum,
-            self.docnum,
-            self.extra2
-        )
+        return 'Заголовок Контейнера\n' \
+               '{:26}: {}\n' \
+               '{:26}: {}\n' \
+               '{:26}: {}\n' \
+               '{:26}: {}\n' \
+               '{:26}: {}\n' \
+               '{:26}: {}\n' \
+               '{:26}: {}\n' \
+               '{:26}: {}\n' \
+               '{:26}: {}'.format(
+                    'Длина', self.length,
+                    'Проверочный код', self.crc,
+                    'Тип сообщения протокола', self.MSGTYPE,
+                    'Тип фискального документа', self.doctype,
+                    'Версия протокола', self.version,
+                    'Служебные данные 1', self.extra1,
+                    'Номер ФН', self.devnum,
+                    'Номер ФД', self.docnum(),
+                    'Служебные данные 2', self.extra2)
 
 
 DOCUMENTS = {
     1: STLV(u'fiscalReport', u'Отчёт о фискализации', maxlen=658),
     2: STLV(u'unknown-2', u'Отчёт об открытии смены', maxlen=440),
     3: STLV(u'receipt', u'Кассовый чек', maxlen=32768),
-    7: STLV(u'<unknown-7>', u'Подтверждение оператора', maxlen=362),
-    1001: Byte(u'autoMode', u'Автоматический режим'),
-    1002: Byte(u'offlineMode', u'Автономный режим'),
-    1003: String(u'<unknown-1003>', u'Адрес банковского агента', maxlen=256),
-    1004: String(u'<unknown-1004>', u'Адрес банковского субагента', maxlen=256),
-    1005: String(u'operatorAddress', u'Адрес оператора по переводу денежных средств', maxlen=256),
-    1006: String(u'<unknown-1006>', u'Адрес платежного агента', maxlen=256),
-    1007: String(u'<unknown-1007>', u'Адрес платежного субагента', maxlen=256),
-    1008: String(u'buyerAddress', u'Адрес покупателя', maxlen=64),
-    1009: String(u'retailPlaceAddress', u'Адрес расчетов', maxlen=256),
-    1010: VLN(u'Размер вознаграждения банковского агента (субагента)'),
-    1011: VLN(u'Размер вознаграждения платежного агента (субагента)'),
-    1012: UnixTime(u'Время, дата'),
-    1013: String(u'kktNumber', u'Заводской номер ККТ', maxlen=10),
-    1014: String(u'<unknown-1014>', u'Значение типа строка', maxlen=64),
-    1015: U32(u'<unknown-1015>', u'Значение типа целое'),
+    7: STLV(u'<unknown-7>', u'подтверждение оператора', maxlen=512),
+    1001: Byte(u'autoMode', u'автоматический режим'),
+    1002: Byte(u'offlineMode', u'автономный режим'),
+    1003: String(u'<unknown-1003>', u'адрес банковского агента', maxlen=256),
+    1004: String(u'<unknown-1004>', u'адрес банковского субагента', maxlen=256),
+    1005: String(u'operatorAddress', u'адрес оператора по переводу денежных средств', maxlen=256),
+    1006: String(u'<unknown-1006>', u'адрес платежного агента', maxlen=256),
+    1007: String(u'<unknown-1007>', u'адрес платежного субагента', maxlen=256),
+    1008: String(u'buyerAddress', u'адрес покупателя', maxlen=64),
+    1009: String(u'retailPlaceAddress', u'адрес (место) расчетов', maxlen=256),
+    1010: VLN(u'<unknown-1010>', u'Размер вознаграждения банковского агента (субагента)'),
+    1011: VLN(u'<unknown-1011>', u'Размер вознаграждения платежного агента (субагента)'),
+    1012: UnixTime(u'timestamp', u'дата, время'),
+    1013: String(u'kktNumber', u'Заводской номер ККТ', maxlen=20),
+    1014: String(u'<unknown-1014>', u'значение типа строка', maxlen=64),
+    1015: U32(u'<unknown-1015>', u'значение типа целое'),
     1016: String(u'operatorInn', u'ИНН оператора по переводу денежных средств', maxlen=12),
     1017: String(u'ofdInn', u'ИНН ОФД', maxlen=12),
     1018: String(u'userInn', u'ИНН пользователя', maxlen=12),
     1019: String(u'<unknown-1019>', u'Информационное cообщение', maxlen=64),
-    1020: VLN(u'ИТОГ'),
+    1020: VLN(u'<unknown-1020>', u'ИТОГ'),
     1021: String(u'operator', u'Кассир', maxlen=64),
-    1022: Byte(u'<unknown-1022>', u'Код ответа ОФД'),
-    1023: FVLN(u'Количество', maxlen=8),
+    1022: Byte(u'<unknown-1022>', u'код ответа ОФД'),
+    1023: FVLN(u'<unknown-1023>', u'Количество', maxlen=8),
     1024: String(u'<unknown-1024>', u'Наименование банковского агента', maxlen=64),
     1025: String(u'<unknown-1025>', u'Наименование банковского субагента', maxlen=64),
     1026: String(u'operatorName', u'Наименование оператора по переводу денежных средств', 64),
     1027: String(u'<unknown-1027>', u'Наименование платежного агента', maxlen=64),
     1028: String(u'<unknown-1028>', u'Наименование платежного субагента', maxlen=64),
-    1029: String(u'<unknown-1029>', u'Наименование реквизита', maxlen=64),
+    1029: String(u'<unknown-1029>', u'наименование реквизита', maxlen=64),
     1030: String(u'name', u'Наименование товара', maxlen=64),
-    1031: VLN(u'Наличными'),
+    1031: VLN(u'<unknown-1031>', u'Наличными'),
     1032: STLV(u'<unknown-1032>', u'Налог', maxlen=33),
     1033: STLV(u'<unknown-1033>', u'Налоги', maxlen=33),
-    1034: FVLN(u'Наценка (ставка)', maxlen=8),
-    1035: VLN(u'Наценка (сумма)'),
+    1034: FVLN(u'<unknown-1034>', u'Наценка (ставка)', maxlen=8),
+    1035: VLN(u'<unknown-1035>', u'Наценка (сумма)'),
     1036: String(u'machineNumber', u'Номер автомата', maxlen=12),
     1037: String(u'kktRegId', u'Номер ККТ', maxlen=20),
     1038: U32(u'shiftNumber', u'Номер смены'),
     1039: String(u'<unknown-1039>', u'Зарезервирован', maxlen=12),
-    1040: U32(u'docId', u'Номер фискального документа'),
-    1041: String(u'fiscalDriveNumber', desc=u'Заводской номер фискального накопителя', maxlen=16),
+    1040: U32(u'docId', u'номер фискального документа'),
+    1041: String(u'fiscalDriveNumber', desc=u'заводской номер фискального накопителя', maxlen=16),
     1042: U32(u'requestNumber', u'номер чека за смену'),
-    1043: VLN(u'Общая стоимость позиции с учетом скидок и наценок'),
+    1043: VLN(u'<unknown-1043>', u'Общая стоимость позиции с учетом скидок и наценок'),
     1044: String(u'bankAgentOperation', u'Операция банковского агента', maxlen=24),
     1045: String(u'bankSubagentOperation', u'операция банковского субагента', maxlen=24),
     1046: String(u'<unknown-1046>', u'ОФД', maxlen=64),
-    1047: STLV(u'<unknown-1047>', u'Параметр настройки', maxlen=144),
+    1047: STLV(u'<unknown-1047>', u'параметр настройки', maxlen=144),
     1048: String(u'user', u'Пользователь', maxlen=64),
     1049: String(u'<unknown-1049>', u'Почтовый индекс', maxlen=6),
     1050: Byte(u'fiscalDriveExhaustionSign', u'Признак исчерпания ресурса ФН'),
@@ -327,25 +385,25 @@ DOCUMENTS = {
     1060: String(u'<unknown-1060>', u'Сайт налогового органа', maxlen=64),
     1061: String(u'<unknown-1061>', u'Сайт ОФД', maxlen=64),
     1062: Byte(u'taxationType', u'системы налогообложения'),  # TODO: Bitfields actually, read more.
-    1063: FVLN(u'Скидка (ставка)', 8),
-    1064: VLN(u'Скидка (сумма)'),
+    1063: FVLN(u'<unknown-1063>', u'Скидка (ставка)', 8),
+    1064: VLN(u'<unknown-1064>', u'Скидка (сумма)'),
     1065: String(u'<unknown-1065>', u'Сокращенное наименование налога', maxlen=10),
     1066: String(u'message', u'Сообщение', maxlen=256),
     1067: STLV(u'<unknown-1067>', u'Сообщение оператора для ККТ', maxlen=216),
-    1068: STLV(u'<unknown-1068>', u'Сообщение оператора для ФН', maxlen=169),
+    1068: STLV(u'<unknown-1068>', u'сообщение оператора для ФН', maxlen=169),
     1069: STLV(u'message', u'Сообщение оператору', 328, '*'),
-    1070: FVLN(u'Ставка налога', maxlen=5),
+    1070: FVLN(u'<unknown-1070>', u'Ставка налога', maxlen=5),
     1071: STLV(u'stornoItems', u'сторно товара (реквизиты)', 132, '*'),
-    1072: VLN(u'Сумма налога', maxlen=8),
+    1072: VLN(u'<unknown-1072>', u'Сумма налога', maxlen=8),
     1073: String(u'bankAgentPhone', u'Телефон банковского агента', maxlen=19),
     1074: String(u'paymentAgentPhone', u'Телефон платежного агента', maxlen=19),
     1075: String(u'<unknown-1075>', u'Телефон оператора по переводу денежных средств', maxlen=19),
     1076: String(u'type', u'Тип сообщения', maxlen=64),
-    1077: String(u'fiscalSign', u'Фискальный признак документа', maxlen=6),
-    1078: String(u'<unknown-1078>', u'Фискальный признак оператора', maxlen=18),
-    1079: VLN(u'Цена за единицу'),
+    1077: String(u'fiscalSign', u'фискальный признак документа', maxlen=6),
+    1078: ByteArray(u'<unknown-1078>', u'фискальный признак оператора', maxlen=8),
+    1079: VLN(u'<unknown-1079>', u'Цена за единицу'),
     1080: String(u'barcode', u'Штриховой код EAN13', maxlen=16),
-    1081: VLN(u'Электронными'),
+    1081: VLN(u'<unknown-1081>', u'Электронными'),
     1082: String(u'bankSubagentPhone', u'Телефон банковского субагента', maxlen=19),
     1083: String(u'paymentSubagentPhone', u'Телефон платежного субагента', maxlen=19),
     1084: STLV(u'<unknown-1084>', u'Дополнительный реквизит', 328, '*'),
@@ -353,5 +411,37 @@ DOCUMENTS = {
     1086: String(u'value', u'Значение дополнительного реквизита', maxlen=256),
 
     # 1087: u'Итог смены',
-    1117: String(u'senderAddress', 'адрес отправителя', 64),
+    1108: Byte(u'<unknown-1108', u'признак расчетов в сети Интернет'),
+    1109: Byte(u'<unknown-1109>', u'признак работы в сфере услуг'),
+    1110: Byte(u'<unknown-1110>', u'применяется для формирования БСО'),  # TODO: Not sure about type.
+    1117: String(u'senderAddress', u'адрес отправителя', 64),
 }
+
+DOCS_BY_NAME = dict((doc.name, (ty, doc)) for ty, doc in DOCUMENTS.items())
+DOCS_BY_DESC = dict((doc.desc, (ty, doc)) for ty, doc in DOCUMENTS.items())
+
+
+def pack_json(doc, docs=DOCS_BY_DESC):
+    """
+    Packs the given JSON document into a bytearray using optionally specified documents container.
+
+    :param doc: valid JSON document as object.
+    :param docs: documents container.
+    :return: packed document representation as a bytearray.
+    """
+    wr = b''
+    for name, value in doc.items():
+        ty, cls = docs[name]
+        if isinstance(value, dict):
+            data = pack_json(value)
+        elif isinstance(value, list):
+            data = b''
+            for item in value:
+                data += pack_json(item)
+        else:
+            data = cls.pack(value)
+
+        wr += struct.pack('<HH', ty, len(data))
+        wr += data
+
+    return wr
