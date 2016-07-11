@@ -16,14 +16,42 @@ class InvalidProtocolSignature(RuntimeError):
 
 
 class Byte(object):
+    """
+    Represents a single-byte document item packer/unpacker.
+    """
     STRUCT = struct.Struct('B')
 
-    def __init__(self, name, desc):
+    def __init__(self, name, desc, cardinality=None):
+        """
+        Initialize a single-byte document item with the given name and description.
+        :param name: name as it is encoded in Federal Tax Service.
+        :param desc: description as it is specified in OFD protocol.
+        :param cardinality: specifies how many times the given document item should appear in the parent document. None
+               Possible values: number as a string meaning exact number, '+' meaning one or more, '*' meaning zero or
+               more, None meaning that the cardinality is undefined.
+        """
         self.name = name
         self.desc = desc
+        self.cardinality = cardinality
         self.maxlen = self.STRUCT.size
 
     def pack(self, data):
+        """
+        Pack the given value into a byte representation.
+        :param data: a single byte value.
+        :raise struct.error: if data is not an integer or it does not fit in [0; 255] range.
+        :return: packed value as a bytearray.
+        >>> Byte('', '').pack(42)
+        b'*'
+        >>> Byte('', '').pack(256)
+        Traceback (most recent call last):
+        ...
+        struct.error: ubyte format requires 0 <= number <= 255
+        >>> Byte('', '').pack('string')
+        Traceback (most recent call last):
+        ...
+        struct.error: required argument is not an integer
+        """
         return self.STRUCT.pack(data)
 
     def unpack(self, data):
@@ -151,7 +179,15 @@ class STLV(object):
             value = doc.unpack(data[4:4 + length])
 
             if self.cardinality == '1':
-                result[doc.name] = value
+                if hasattr(doc, 'cardinality'):
+                    if doc.cardinality in {'*', '+'}:
+                        if doc.name not in result:
+                            result[doc.name] = []
+                        result[doc.name].append(value)
+                    else:
+                        result[doc.name] = value
+                else:
+                    result[doc.name] = value
             else:
                 result.append({doc.name: value})
             data = data[4 + length:]
@@ -320,9 +356,16 @@ class FrameHeader(object):
 
 DOCUMENTS = {
     1: STLV(u'fiscalReport', u'Отчёт о фискализации', maxlen=658),
-    2: STLV(u'unknown-2', u'Отчёт об открытии смены', maxlen=440),
+    11: STLV(u'fiscalReportCorrection', u'Отчёт об изменении параметров регистрации', maxlen=658),
+    2: STLV(u'openShift', u'Отчёт об открытии смены', maxlen=440),
+    21: STLV(u'currentStateReport', u'Отчёт о текущем состоянии расчетов', maxlen=32768),
     3: STLV(u'receipt', u'Кассовый чек', maxlen=32768),
-    7: STLV(u'<unknown-7>', u'подтверждение оператора', maxlen=512),
+    31: STLV(u'receiptCorrection', u'Кассовый чек коррекции', maxlen=32768),
+    4: STLV(u'bso', u'Бланк строгой отчетности', maxlen=32768),
+    41: STLV(u'bsoCorrection', u'Бланк строгой отчетности коррекции', maxlen=32768),
+    5: STLV(u'closeShift', u'Отчёт о закрытии смены', maxlen=441),
+    6: STLV(u'closeArchive', u'Отчёт о закрытии фискального накопителя', maxlen=432),
+    7: STLV(u'operatorAck(?)', u'подтверждение оператора', maxlen=512),
     1001: Byte(u'autoMode', u'автоматический режим'),
     1002: Byte(u'offlineMode', u'автономный режим'),
     1003: String(u'<unknown-1003>', u'адрес банковского агента', maxlen=256),
@@ -332,9 +375,9 @@ DOCUMENTS = {
     1007: String(u'<unknown-1007>', u'адрес платежного субагента', maxlen=256),
     1008: String(u'buyerAddress', u'адрес покупателя', maxlen=64),
     1009: String(u'retailPlaceAddress', u'адрес (место) расчетов', maxlen=256),
-    1010: VLN(u'<unknown-1010>', u'Размер вознаграждения банковского агента (субагента)'),
-    1011: VLN(u'<unknown-1011>', u'Размер вознаграждения платежного агента (субагента)'),
-    1012: UnixTime(u'timestamp', u'дата, время'),
+    1010: VLN(u'bankAgentRemuneration', u'Размер вознаграждения банковского агента (субагента)'),
+    1011: VLN(u'paymentAgentRemuneration', u'Размер вознаграждения платежного агента (субагента)'),
+    1012: UnixTime(u'dateTime', u'дата, время'),
     1013: String(u'kktNumber', u'Заводской номер ККТ', maxlen=20),
     1014: String(u'<unknown-1014>', u'значение типа строка', maxlen=64),
     1015: U32(u'<unknown-1015>', u'значение типа целое'),
@@ -342,10 +385,10 @@ DOCUMENTS = {
     1017: String(u'ofdInn', u'ИНН ОФД', maxlen=12),
     1018: String(u'userInn', u'ИНН пользователя', maxlen=12),
     1019: String(u'<unknown-1019>', u'Информационное cообщение', maxlen=64),
-    1020: VLN(u'<unknown-1020>', u'ИТОГ'),
+    1020: VLN(u'totalSum', u'ИТОГ'),
     1021: String(u'operator', u'Кассир', maxlen=64),
     1022: Byte(u'<unknown-1022>', u'код ответа ОФД'),
-    1023: FVLN(u'<unknown-1023>', u'Количество', maxlen=8),
+    1023: FVLN(u'quantity', u'Количество', maxlen=8),
     1024: String(u'<unknown-1024>', u'Наименование банковского агента', maxlen=64),
     1025: String(u'<unknown-1025>', u'Наименование банковского субагента', maxlen=64),
     1026: String(u'operatorName', u'Наименование оператора по переводу денежных средств', 64),
@@ -353,19 +396,19 @@ DOCUMENTS = {
     1028: String(u'<unknown-1028>', u'Наименование платежного субагента', maxlen=64),
     1029: String(u'<unknown-1029>', u'наименование реквизита', maxlen=64),
     1030: String(u'name', u'Наименование товара', maxlen=64),
-    1031: VLN(u'<unknown-1031>', u'Наличными'),
+    1031: VLN(u'cashTotalSum', u'Наличными'),
     1032: STLV(u'<unknown-1032>', u'Налог', maxlen=33),
     1033: STLV(u'<unknown-1033>', u'Налоги', maxlen=33),
-    1034: FVLN(u'<unknown-1034>', u'Наценка (ставка)', maxlen=8),
-    1035: VLN(u'<unknown-1035>', u'Наценка (сумма)'),
+    1034: FVLN(u'markup', u'Наценка (ставка)', maxlen=8),
+    1035: VLN(u'markupSum', u'Наценка (сумма)'),
     1036: String(u'machineNumber', u'Номер автомата', maxlen=12),
     1037: String(u'kktRegId', u'Номер ККТ', maxlen=20),
     1038: U32(u'shiftNumber', u'Номер смены'),
     1039: String(u'<unknown-1039>', u'Зарезервирован', maxlen=12),
-    1040: U32(u'docId', u'номер фискального документа'),
+    1040: U32(u'fiscalDocumentNumber', u'номер фискального документа'),
     1041: String(u'fiscalDriveNumber', desc=u'заводской номер фискального накопителя', maxlen=16),
     1042: U32(u'requestNumber', u'номер чека за смену'),
-    1043: VLN(u'<unknown-1043>', u'Общая стоимость позиции с учетом скидок и наценок'),
+    1043: VLN(u'sum', u'Общая стоимость позиции с учетом скидок и наценок'),
     1044: String(u'bankAgentOperation', u'Операция банковского агента', maxlen=24),
     1045: String(u'bankSubagentOperation', u'операция банковского субагента', maxlen=24),
     1046: String(u'<unknown-1046>', u'ОФД', maxlen=64),
@@ -385,8 +428,8 @@ DOCUMENTS = {
     1060: String(u'<unknown-1060>', u'Сайт налогового органа', maxlen=64),
     1061: String(u'<unknown-1061>', u'Сайт ОФД', maxlen=64),
     1062: Byte(u'taxationType', u'системы налогообложения'),  # TODO: Bitfields actually, read more.
-    1063: FVLN(u'<unknown-1063>', u'Скидка (ставка)', 8),
-    1064: VLN(u'<unknown-1064>', u'Скидка (сумма)'),
+    1063: FVLN(u'discount', u'Скидка (ставка)', 8),
+    1064: VLN(u'discountSum', u'Скидка (сумма)'),
     1065: String(u'<unknown-1065>', u'Сокращенное наименование налога', maxlen=10),
     1066: String(u'message', u'Сообщение', maxlen=256),
     1067: STLV(u'<unknown-1067>', u'Сообщение оператора для ККТ', maxlen=216),
@@ -397,24 +440,39 @@ DOCUMENTS = {
     1072: VLN(u'<unknown-1072>', u'Сумма налога', maxlen=8),
     1073: String(u'bankAgentPhone', u'Телефон банковского агента', maxlen=19),
     1074: String(u'paymentAgentPhone', u'Телефон платежного агента', maxlen=19),
-    1075: String(u'<unknown-1075>', u'Телефон оператора по переводу денежных средств', maxlen=19),
+    1075: String(u'operatorPhone', u'Телефон оператора по переводу денежных средств', maxlen=19),
     1076: String(u'type', u'Тип сообщения', maxlen=64),
     1077: String(u'fiscalSign', u'фискальный признак документа', maxlen=6),
     1078: ByteArray(u'<unknown-1078>', u'фискальный признак оператора', maxlen=8),
-    1079: VLN(u'<unknown-1079>', u'Цена за единицу'),
+    1079: VLN(u'price', u'Цена за единицу'),
     1080: String(u'barcode', u'Штриховой код EAN13', maxlen=16),
-    1081: VLN(u'<unknown-1081>', u'Электронными'),
+    1081: VLN(u'ecashTotalSum', u'Электронными'),
     1082: String(u'bankSubagentPhone', u'Телефон банковского субагента', maxlen=19),
     1083: String(u'paymentSubagentPhone', u'Телефон платежного субагента', maxlen=19),
-    1084: STLV(u'<unknown-1084>', u'Дополнительный реквизит', 328, '*'),
+    1084: STLV(u'properties', u'Дополнительный реквизит', 328, '*'),
     1085: String(u'key', u'Наименование дополнительного реквизита', maxlen=64),
     1086: String(u'value', u'Значение дополнительного реквизита', maxlen=256),
-
     # 1087: u'Итог смены',
-    1108: Byte(u'<unknown-1108', u'признак расчетов в сети Интернет'),
-    1109: Byte(u'<unknown-1109>', u'признак работы в сфере услуг'),
-    1110: Byte(u'<unknown-1110>', u'применяется для формирования БСО'),  # TODO: Not sure about type.
+    # ..
+    1097: U32(u'notTransmittedDocumentsQuantity', u'количество непереданных документов ФД'),
+    1098: UnixTime(u'notTransmittedDocumentsDateTime', u'дата и время первого из непереданных ФД'),
+    1102: VLN(u'nds18', u'НДС итога чека со ставкой 18%'),
+    1103: VLN(u'nds10', u'НДС итога чека со ставкой 10%'),
+    1104: VLN(u'nds0', u'НДС итога чека со ставкой 0%'),
+    1105: VLN(u'ndsNo', u'НДС не облагается'),
+    1106: VLN(u'ndsCalculated18', u'НДС итога чека с рассчитанной ставкой 18%'),
+    1107: VLN(u'ndsCalculated10', u'НДС итога чека с рассчитанной ставкой 10%'),
+    1108: Byte(u'internetSign', u'признак расчетов в сети Интернет'),
+    1109: Byte(u'serviceSign', u'признак работы в сфере услуг'),
+    1110: Byte(u'bsoSign', u'применяется для формирования БСО'),  # TODO: Not sure about type.
+    1111: U32(u'documentsQuantity(1)', u'количество фискальных документов за смену'),  # TODO: Duplicate names with 1118.
+    # 1112: u'modifiers',
+    # 1113: u'discountName',
+    # 1114: u'markupName',
+    # 1115: u'addressToCheckFiscalSign',
     1117: String(u'senderAddress', u'адрес отправителя', 64),
+    1118: U32(u'documentsQuantity(2)', u'количество кассовых чеков за смену'),
+    # 1119: u'operatorPhoneToReceive'
 }
 
 DOCS_BY_NAME = dict((doc.name, (ty, doc)) for ty, doc in DOCUMENTS.items())
