@@ -168,28 +168,22 @@ class STLV(object):
         if len(data) > self.maxlen:
             raise ValueError('STLV actual size is greater than maximum')
 
-        if self.cardinality == '1':
-            result = {}
-        else:
-            result = []
+        result = {}
 
         while len(data) > 0:
             ty, length = struct.unpack('<HH', data[:4])
             doc = DOCUMENTS[ty]
             value = doc.unpack(data[4:4 + length])
 
-            if self.cardinality == '1':
-                if hasattr(doc, 'cardinality'):
-                    if doc.cardinality in {'*', '+'}:
-                        if doc.name not in result:
-                            result[doc.name] = []
-                        result[doc.name].append(value)
-                    else:
-                        result[doc.name] = value
+            if hasattr(doc, 'cardinality'):
+                if doc.cardinality in {'*', '+'}:
+                    if doc.name not in result:
+                        result[doc.name] = []
+                    result[doc.name].append(value)
                 else:
                     result[doc.name] = value
             else:
-                result.append({doc.name: value})
+                result[doc.name] = value
             data = data[4 + length:]
 
         return result
@@ -466,7 +460,7 @@ DOCUMENTS = {
     1109: Byte(u'serviceSign', u'признак работы в сфере услуг'),
     1110: Byte(u'bsoSign', u'применяется для формирования БСО'),  # TODO: Not sure about type.
     1111: U32(u'documentsQuantity(1)', u'количество фискальных документов за смену'),  # TODO: Duplicate names with 1118.
-    # 1112: u'modifiers',
+    1112: STLV(u'modifiers', u'скидка/наценка', 160, '*'),
     # 1113: u'discountName',
     # 1114: u'markupName',
     # 1115: u'addressToCheckFiscalSign',
