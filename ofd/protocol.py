@@ -223,7 +223,8 @@ class SessionHeader(object):
         if pack[cls.MAGIC_ID] != cls.MAGIC:
             raise ValueError('invalid protocol signature')
         if pack[cls.PVERS_ID] != cls.PVERS:
-            raise ValueError('invalid session protocol version')
+            # raise ValueError('invalid session protocol version')
+            pass
         if pack[cls.PVERA_ID] != cls.PVERA:
             raise ValueError('invalid application protocol version')
 
