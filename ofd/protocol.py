@@ -309,7 +309,7 @@ class FrameHeader(object):
         :return: structured ContainerHeader.
         """
         if len(data) != cls.STRUCT_TINY.size:
-            raise ValueError('data size must be 32')
+            raise ValueError('data size must be 28')
         pack = cls.STRUCT_TINY.unpack(data)
 
         if pack[cls.MSGTYPE_ID - 2] != cls.MSGTYPE:
