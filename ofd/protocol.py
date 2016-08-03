@@ -11,8 +11,17 @@ VERSION = (1, 1, 0, 'ATOL-3')
 SIGNATURE = array.array('B', [42, 8, 65, 10]).tostring()
 
 
-class InvalidProtocolSignature(RuntimeError):
+class ProtocolError(RuntimeError):
     pass
+
+
+class InvalidProtocolSignature(ProtocolError):
+    pass
+
+
+class InvalidProtocolDocument(ProtocolError):
+    def __init__(self):
+        super(InvalidProtocolDocument, self).__init__('invalid document')
 
 
 class Byte(object):
