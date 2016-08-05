@@ -450,16 +450,27 @@ DOCUMENTS = {
     1078: ByteArray(u'<unknown-1078>', u'фискальный признак оператора', maxlen=8),
     1079: VLN(u'price', u'Цена за единицу'),
     1080: String(u'barcode', u'Штриховой код EAN13', maxlen=16),
-    1081: VLN(u'ecashTotalSum', u'Электронными'),
-    1082: String(u'bankSubagentPhone', u'Телефон банковского субагента', maxlen=19),
-    1083: String(u'paymentSubagentPhone', u'Телефон платежного субагента', maxlen=19),
-    1084: STLV(u'properties', u'Дополнительный реквизит', 328, '*'),
-    1085: String(u'key', u'Наименование дополнительного реквизита', maxlen=64),
-    1086: String(u'value', u'Значение дополнительного реквизита', maxlen=256),
+    1081: VLN(u'ecashTotalSum', u'форма расчета – электронными'),
+    1082: String(u'bankSubagentPhone', u'телефон банковского субагента', maxlen=19),
+    1083: String(u'paymentSubagentPhone', u'телефон платежного субагента', maxlen=19),
+    1084: STLV(u'properties', u'дополнительный реквизит', 328, '*'),
+    1085: String(u'key', u'наименование дополнительного реквизита', maxlen=64),
+    1086: String(u'value', u'значение дополнительного реквизита', maxlen=256),
     # 1087: u'Итог смены',
-    # ..
+    # 1088:
+    # 1089:
+    # 1090:
+    # 1091:
+    # 1092:
+    # 1093:
+    # 1094:
+    # 1095:
+    # 1096:
     1097: U32(u'notTransmittedDocumentsQuantity', u'количество непереданных документов ФД'),
     1098: UnixTime(u'notTransmittedDocumentsDateTime', u'дата и время первого из непереданных ФД'),
+    # 1099:
+    # 1100:
+    # 1101:
     1102: VLN(u'nds18', u'НДС итога чека со ставкой 18%'),
     1103: VLN(u'nds10', u'НДС итога чека со ставкой 10%'),
     1104: VLN(u'nds0', u'НДС итога чека со ставкой 0%'),
@@ -471,9 +482,9 @@ DOCUMENTS = {
     1110: Byte(u'bsoSign', u'применяется для формирования БСО'),  # TODO: Not sure about type.
     1111: U32(u'documentsQuantity(1)', u'количество фискальных документов за смену'),  # TODO: Duplicate names with 1118.
     1112: STLV(u'modifiers', u'скидка/наценка', 160, '*'),
-    # 1113: u'discountName',
-    # 1114: u'markupName',
-    # 1115: u'addressToCheckFiscalSign',
+    1113: String(u'discountName', u'наименование скидки', 64),
+    1114: String(u'markupName', u'наименование наценки', 64),
+    1115: String(u'addressToCheckFiscalSign', u'адрес сайта для проверки ФП', 256),
     1117: String(u'senderAddress', u'адрес отправителя', 64),
     1118: U32(u'documentsQuantity(2)', u'количество кассовых чеков за смену'),
     # 1119: u'operatorPhoneToReceive'
