@@ -484,13 +484,13 @@ DOCUMENTS = {
     1108: Byte(u'internetSign', u'признак расчетов в сети Интернет'),
     1109: Byte(u'serviceSign', u'признак работы в сфере услуг'),
     1110: Byte(u'bsoSign', u'применяется для формирования БСО'),  # TODO: Not sure about type.
-    1111: U32(u'documentsQuantity(1)', u'количество фискальных документов за смену'),  # TODO: Duplicate names with 1118.
+    1111: U32(u'documentsQuantity', u'количество фискальных документов за смену'),  # TODO: Duplicate names with 1118.
     1112: STLV(u'modifiers', u'скидка/наценка', 160, '*'),
     1113: String(u'discountName', u'наименование скидки', 64),
     1114: String(u'markupName', u'наименование наценки', 64),
     1115: String(u'addressToCheckFiscalSign', u'адрес сайта для проверки ФП', 256),
     1117: String(u'senderAddress', u'адрес отправителя', 64),
-    1118: U32(u'documentsQuantity(2)', u'количество кассовых чеков за смену'),
+    1118: U32(u'receiptsQuantity', u'количество кассовых чеков за смену'),  # TODO: Имя придумал сам, конфликт с 1111.
     1119: String(u'operatorPhoneToReceive', u'телефон оператора по приему платежей', 19),
 }
 
@@ -677,12 +677,48 @@ SCHEMA = {
             'description': 'наименование пользователя',
             'maxLength': 256,
         },
+        'fiscalDriveExhaustionSign': {
+            'tag': 1050,
+            'type': 'number',
+            'description': 'признак исчерпания ресурса ФН',
+            'minimum': 0,
+            'maximum': 1,
+        },
+        'fiscalDriveReplaceRequiredSign': {
+            'tag': 1051,
+            'type': 'number',
+            'description': 'признак необходимости срочной замены ФН',
+            'minimum': 0,
+            'maximum': 1,
+        },
+        'fiscalDriveMemoryExceededSign': {
+            'tag': 1052,
+            'type': 'number',
+            'description': 'признак переполнения памяти ФН',
+            'minimum': 0,
+            'maximum': 1,
+        },
+        'ofdResponseTimeoutSign': {
+            'tag': 1053,
+            'type': 'number',
+            'description': 'признак превышения времени ожидания ответа ОФД',
+            'minimum': 0,
+            'maximum': 1,
+        },
         'operationType': {
             'tag': 1054,
             'type': 'number',
             'minimum': 1,
             'maximum': 4,
             'description': 'признак расчета',
+        },
+        # TODO: В налоговом документе это поле имеет тэг 1062.
+        'taxationType': {
+            'tag': 1055,
+            'type': 'number',
+            'minimum': 0,
+            'maximum': 255,
+            'description': 'применяемая система налогообложения',
         },
         'items': {
             'tag': 1059,
@@ -691,14 +727,6 @@ SCHEMA = {
             'items': [
                 {'$ref': '#/common/items'},
             ],
-        },
-        # TODO: В налоговом документе это поле имеет тэг 1062.
-        'taxationType': {
-            'tag': 1055,
-            'type': 'number',
-            'minimum': 0,
-            'maximum': 1,
-            'description': 'применяемая система налогообложения',
         },
         'discount': {
             'tag': 1063,
@@ -801,6 +829,16 @@ SCHEMA = {
             'description': 'значение дополнительного реквизита',
             'maxLength': 256,
         },
+        'notTransmittedDocumentsQuantity': {
+            'tag': 1097,
+            'type': 'number',
+            'description': 'кол-во неподтвержденных документов ФД',
+        },
+        'notTransmittedDocumentsDateTime': {
+            'tag': 1098,
+            'type': 'number',
+            'description': 'дата и время первого из непереданных ФД',
+        },
         'nds18': {
             'tag': 1102,
             'type': 'number',
@@ -830,6 +868,11 @@ SCHEMA = {
             'tag': 1107,
             'type': 'number',
             'description': 'НДС итога чека с рассчитанной ставкой 10%',
+        },
+        'documentsQuantity': {
+            'tag': 1111,
+            'type': 'number',
+            'description': 'количество фискальных документов за смену',
         },
         'modifiers': {
             'tag': 1112,
@@ -873,6 +916,12 @@ SCHEMA = {
             'type': 'string',
             'description': 'адрес отправителя',
             'maxLength': 64,
+        },
+        # TODO: Название сам придумал, в документе дубликат - documentsQuantity.
+        'receiptsQuantity': {
+            'tag': 1118,
+            'type': 'number',
+            'description': 'количество кассовых чеков за смену',
         },
         'operatorPhoneToReceive': {
             'tag': 1119,
@@ -1069,7 +1118,53 @@ SCHEMA = {
         #     '$properties': '#/properties/receipt/properties',
         #     'additionalProperties': False,
         #     '$required': '#/properties/receipt/required',
-        # }
+        # },
+        'closeShift': {
+            'tag': 5,
+            'type': 'object',
+            'description': 'Отчёт о закрытии смены',
+            'properties': {
+                'user': {'$ref': '#/definitions/user'},
+                'userInn': {'$ref': '#/definitions/userInn'},
+                'operator': {'$ref': '#/definitions/operator'},
+                'dateTime': {'$ref': '#/definitions/dateTime'},
+                'shiftNumber': {'$ref': '#/definitions/shiftNumber'},
+                'receiptsQuantity': {'$ref': '#/definitions/receiptsQuantity'},
+                'documentsQuantity': {'$ref': '#/definitions/documentsQuantity'},
+                'notTransmittedDocumentsQuantity': {'$ref': '#/definitions/notTransmittedDocumentsQuantity'},
+                'notTransmittedDocumentsDateTime': {'$ref': '#/definitions/notTransmittedDocumentsDateTime'},
+                'ofdResponseTimeoutSign': {'$ref': '#/definitions/ofdResponseTimeoutSign'},
+                'fiscalDriveReplaceRequiredSign': {'$ref': '#/definitions/fiscalDriveReplaceRequiredSign'},
+                'fiscalDriveMemoryExceededSign': {'$ref': '#/definitions/fiscalDriveMemoryExceededSign'},
+                'fiscalDriveExhaustionSign': {'$ref': '#/definitions/fiscalDriveExhaustionSign'},
+                'kktRegId': {'$ref': '#/definitions/kktRegId'},
+                'fiscalDriveNumber': {'$ref': '#/definitions/fiscalDriveNumber'},
+                'fiscalDocumentNumber': {'$ref': '#/definitions/fiscalDocumentNumber'},
+                'fiscalSign': {'$ref': '#/definitions/fiscalSign'},
+                'message': {'$ref': '#/definitions/message'},
+                'properties': {'$ref': '#/definitions/properties'},
+            },
+            'additionalProperties': False,
+            'required': [
+                'user',
+                'userInn',
+                'operator',
+                'dateTime',
+                'shiftNumber',
+                'receiptsQuantity',
+                'documentsQuantity',
+                'notTransmittedDocumentsQuantity',
+                'notTransmittedDocumentsDateTime',
+                'ofdResponseTimeoutSign',
+                'fiscalDriveReplaceRequiredSign',
+                'fiscalDriveMemoryExceededSign',
+                'fiscalDriveExhaustionSign',
+                'kktRegId',
+                'fiscalDriveNumber',
+                'fiscalDocumentNumber',
+                'fiscalSign',
+            ],
+        },
     },
 
     'additionalProperties': False,
@@ -1077,6 +1172,8 @@ SCHEMA = {
         {'required': ['fiscalReport']},
         {'required': ['openShift']},
         {'required': ['receipt']},
+        # {'required': ['bso']},
+        {'required': ['closeShift']},
     ],
 }
 
