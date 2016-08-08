@@ -491,7 +491,131 @@ DOCUMENTS = {
     1115: String(u'addressToCheckFiscalSign', u'адрес сайта для проверки ФП', 256),
     1117: String(u'senderAddress', u'адрес отправителя', 64),
     1118: U32(u'documentsQuantity(2)', u'количество кассовых чеков за смену'),
-    # 1119: u'operatorPhoneToReceive'
+    1119: String(u'operatorPhoneToReceive', u'телефон оператора по приему платежей', 19),
+}
+
+SCHEMA = {
+    '$schema': 'http://json-schema.org/draft-04/schema#',
+
+    'properties': {
+        # TODO: Incomplete.
+        'fiscalReport': {
+            'type': 'object',
+            'description': 'Отчет о регистрации',
+            'id': '1',
+            'properties': {
+                'autoMode': {
+                    'type': 'number',
+                    'minimum': 0,
+                    'maximum': 1,
+                    'description': 'автоматический режим',
+                    'id': '1001',
+                },
+                'offlineMode': {
+                    'type': 'number',
+                    'minimum': 0,
+                    'maximum': 1,
+                    'description': 'автономный режим',
+                    'id': '1002',
+                },
+                'user': {
+                    'type': 'string',
+                    'maxLength': 256,
+                    'description': 'наименование пользователя',
+                    'id': '1048',
+                }
+            },
+            'required': [
+                'user',
+                'autoMode',
+                'offlineMode'
+            ],
+        },
+        'openShift': {
+            'id': '2',
+            'type': 'object',
+            'description': 'Отчет об открытии смены',
+            'properties': {
+                'user': {
+                    'id': '1048',
+                    'type': 'string',
+                    'description': 'наименование пользователя',
+                    'maxLength': 256,
+                },
+                'userInn': {
+                    'id': '1018',
+                    'type': 'string',
+                    'description': 'ИНН пользователя',
+                    'minLength': 12,
+                    'maxLength': 12,
+                },
+                'operator': {
+                    'id': '1021',
+                    'type': 'string',
+                    'description': 'кассир',
+                    'maxLength': 64,
+                },
+                'retailPlaceAddress': {
+                    'id': '1009',
+                    'type': 'string',
+                    'description': 'адрес (место) расчетов',
+                    'maxLength': 256,
+                },
+                'dateTime': {
+                    'id': '1012',
+                    'type': 'number',
+                    'description': 'дата, время',
+                },
+                'shiftNumber': {
+                    'id': '1038',
+                    'type': 'number',
+                    'description': 'номер смены',
+                },
+                'kktRegId': {
+                    'id': '1037',
+                    'type': 'string',
+                    'description': 'регистрационный номер ККТ',
+                    'minLength': 20,
+                    'maxLength': 20,
+                },
+                'fiscalDriveNumber': {
+                    'id': '1041',
+                    'type': 'string',
+                    'description': 'заводской номер фискального накопителя',
+                    'minLength': 16,
+                    'maxLength': 16,
+                },
+                'fiscalDocumentNumber': {
+                    'id': '1040',
+                    'type': 'number',
+                    'description': 'порядковый номер фискального документа',
+                },
+                'fiscalSign': {
+                    'id': '1077',
+                    'type': 'number',
+                    'description': 'фискальный признак документа',
+                },
+                'message': {
+                    'id': '1069',
+                    'type': 'array',
+                    'descrption': 'сообщение оператору',
+                },
+                'properties': {
+                    'id': '1084',
+                    'type': 'array',
+                    'description': 'дополнительный реквизит',
+                }
+            },
+            'required': ['user', 'userInn', 'operator', 'retailPlaceAddress', 'dateTime', 'shiftNumber', 'kktRegId',
+                         'fiscalDriveNumber', 'fiscalDocumentNumber', 'fiscalSign'],
+        }
+    },
+
+    'additionalProperties': False,
+    'oneOf': [
+        {'required': ['fiscalReport']},
+        {'required': ['openShift']},
+    ],
 }
 
 DOCS_BY_NAME = dict((doc.name, (ty, doc)) for ty, doc in DOCUMENTS.items())
