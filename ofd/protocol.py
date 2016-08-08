@@ -450,7 +450,7 @@ DOCUMENTS = {
     1074: String(u'paymentAgentPhone', u'Телефон платежного агента', maxlen=19),
     1075: String(u'operatorPhone', u'Телефон оператора по переводу денежных средств', maxlen=19),
     1076: String(u'type', u'Тип сообщения', maxlen=64),
-    1077: String(u'fiscalSign', u'фискальный признак документа', maxlen=6),
+    1077: VLN(u'fiscalSign', u'фискальный признак документа', maxlen=6),
     1078: ByteArray(u'<unknown-1078>', u'фискальный признак оператора', maxlen=8),
     1079: VLN(u'price', u'Цена за единицу'),
     1080: String(u'barcode', u'Штриховой код EAN13', maxlen=16),
