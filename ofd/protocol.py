@@ -497,7 +497,44 @@ DOCUMENTS = {
 SCHEMA = {
     '$schema': 'http://json-schema.org/draft-04/schema#',
 
+    'common': {
+        'items': {
+            'type': 'object',
+            'properties': {
+                'name': {'$ref': '#/definitions/name'},
+                'barcode': {'$ref': '#/definitions/barcode'},
+                'price': {'$ref': '#/definitions/price'},
+                'quantity': {'$ref': '#/definitions/quantity'},
+                'modifiers': {'$ref': '#/definitions/modifiers'},
+                'nds18': {'$ref': '#/definitions/nds18'},
+                'nds10': {'$ref': '#/definitions/nds10'},
+                'nds0': {'$ref': '#/definitions/nds0'},
+                'ndsNo': {'$ref': '#/definitions/ndsNo'},
+                'ndsCalculated18': {'$ref': '#/definitions/ndsCalculated18'},
+                'ndsCalculated10': {'$ref': '#/definitions/ndsCalculated10'},
+                'sum': {'$ref': '#/definitions/sum'},
+                'properties': {'$ref': '#/definitions/properties'},
+            },
+            'additionalProperties': False,
+            'required': ['name', 'quantity', 'sum'],
+        },
+    },
+
     'definitions': {
+        'autoMode': {
+            'tag': 1001,
+            'type': 'number',
+            'description': 'автоматический режим',
+            'minimum': 0,
+            'maximum': 1,
+        },
+        'offlineMode': {
+            'tag': 1002,
+            'type': 'number',
+            'description': 'автономный режим',
+            'minimum': 0,
+            'maximum': 1,
+        },
         'operatorAddress': {
             'tag': 1005,
             'type': 'string',
@@ -578,6 +615,16 @@ SCHEMA = {
             'type': 'number',
             'description': 'форма расчета - наличными',
         },
+        'markup': {
+            'tag': 1034,
+            'type': 'number',
+            'description': 'наценка (ставка)',
+        },
+        'markupSum': {
+            'tag': 1035,
+            'type': 'number',
+            'description': 'наценка (сумма)',
+        },
         'kktRegId': {
             'tag': 1037,
             'type': 'string',
@@ -633,8 +680,8 @@ SCHEMA = {
         'operationType': {
             'tag': 1054,
             'type': 'number',
-            'minimum': 0,
-            'maximum': 1,
+            'minimum': 1,
+            'maximum': 4,
             'description': 'признак расчета',
         },
         'items': {
@@ -642,26 +689,7 @@ SCHEMA = {
             'type': 'array',
             'description': 'наименование товара (реквизиты)',
             'items': [
-                {
-                    'type': 'object',
-                    'properties': {
-                        'name': {'$ref': '#/definitions/name'},
-                        'barcode': {'$ref': '#/definitions/barcode'},
-                        'price': {'$ref': '#/definitions/price'},
-                        'quantity': {'$ref': '#/definitions/quantity'},
-                        'modifiers': {'$ref': '#/definitions/modifiers'},
-                        'nds18': {'$ref': '#/definitions/nds18'},
-                        'nds10': {'$ref': '#/definitions/nds10'},
-                        'nds0': {'$ref': '#/definitions/nds0'},
-                        'ndsNo': {'$ref': '#/definitions/ndsNo'},
-                        'ndsCalculated18': {'$ref': '#/definitions/ndsCalculated18'},
-                        'ndsCalculated10': {'$ref': '#/definitions/ndsCalculated10'},
-                        'sum': {'$ref': '#/definitions/sum'},
-                        'properties': {'$ref': '#/definitions/properties'},
-                    },
-                    'additionalProperties': False,
-                    'required': ['name', 'quantity', 'sum'],
-                },
+                {'$ref': '#/common/items'},
             ],
         },
         # TODO: В налоговом документе это поле имеет тэг 1062.
@@ -672,6 +700,16 @@ SCHEMA = {
             'maximum': 1,
             'description': 'применяемая система налогообложения',
         },
+        'discount': {
+            'tag': 1063,
+            'type': 'number',
+            'description': 'скидка (ставка)',
+        },
+        'discountSum': {
+            'tag': 1064,
+            'type': 'number',
+            'description': 'скидка (сумма)',
+        },
         'message': {
             'tag': 1069,
             'type': 'array',
@@ -681,6 +719,9 @@ SCHEMA = {
             'tag': 1071,
             'type': 'array',
             'description': 'сторно товара (реквизиты)',
+            'items': [
+                {'$ref': '#/common/items'},
+            ],
         },
         'bankAgentPhone': {
             'tag': 1073,
@@ -737,6 +778,28 @@ SCHEMA = {
             'tag': 1084,
             'type': 'array',
             'description': 'дополнительный реквизит',
+            'items': [
+                {
+                    'type': 'object',
+                    'properties': {
+                        'key': {'$ref': '#/definitions/key'},
+                        'value': {'$ref': '#/definitions/value'},
+                    },
+                    'additionalProperties': False,
+                },
+            ],
+        },
+        'key': {
+            'tag': 1085,
+            'type': 'string',
+            'description': 'наименование дополнительного реквизита',
+            'maxLength': 64,
+        },
+        'value': {
+            'tag': 1086,
+            'type': 'string',
+            'description': 'значение дополнительного реквизита',
+            'maxLength': 256,
         },
         'nds18': {
             'tag': 1102,
@@ -772,6 +835,32 @@ SCHEMA = {
             'tag': 1112,
             'type': 'array',
             'description': 'скидка/наценка',
+            'items': [
+                {
+                    'type': 'object',
+                    'properties': {
+                        'discountName': {'$ref': '#/definitions/discountName'},
+                        'markupName': {'$ref': '#/definitions/markupName'},
+                        'discount': {'$ref': '#/definitions/discount'},
+                        'markup': {'$ref': '#/definitions/markup'},
+                        'discountSum': {'$ref': '#/definitions/discountSum'},
+                        'markupSum': {'$ref': '#/definitions/markupSum'},
+                    },
+                    'additionalProperties': False,
+                },
+            ],
+        },
+        'discountName': {
+            'tag': 1113,
+            'type': 'string',
+            'description': 'наименование скидки',
+            'maxLength': 64,
+        },
+        'markupName': {
+            'tag': 1114,
+            'type': 'string',
+            'description': 'наименование наценки',
+            'maxLength': 64,
         },
         'addressToCheckFiscalSign': {
             'tag': 1115,
@@ -793,6 +882,70 @@ SCHEMA = {
         },
     },
 
+    'receipt-bso': {
+        'properties': {
+            'user': {'$ref': '#/definitions/user'},
+            'userInn': {'$ref': '#/definitions/userInn'},
+            'requestNumber': {'$ref': '#/definitions/requestNumber'},
+            'dateTime': {'$ref': '#/definitions/dateTime'},
+            'shiftNumber': {'$ref': '#/definitions/shiftNumber'},
+            'operationType': {'$ref': '#/definitions/operationType'},
+            'taxationType': {'$ref': '#/definitions/taxationType'},
+            'operator': {'$ref': '#/definitions/operator'},
+            'kktRegId': {'$ref': '#/definitions/kktRegId'},
+            'fiscalDriveNumber': {'$ref': '#/definitions/fiscalDriveNumber'},
+            'retailPlaceAddress': {'$ref': '#/definitions/retailPlaceAddress'},
+            'buyerAddress': {'$ref': '#/definitions/buyerAddress'},
+            'senderAddress': {'$ref': '#/definitions/senderAddress'},
+            'addressToCheckFiscalSign': {'$ref': '#/definitions/addressToCheckFiscalSign'},
+            'items': {'$ref': '#/definitions/items'},
+            'stornoItems': {'$ref': '#/definitions/stornoItems'},
+            'paymentAgentRemuneration': {'$ref': '#/definitions/paymentAgentRemuneration'},
+            'paymentAgentPhone': {'$ref': '#/definitions/paymentAgentPhone'},
+            'paymentSubagentPhone': {'$ref': '#/definitions/paymentSubagentPhone'},
+            'operatorPhoneToReceive': {'$ref': '#/definitions/operatorPhoneToReceive'},
+            'operatorPhone': {'$ref': '#/definitions/operatorPhone'},
+            'bankAgentPhone': {'$ref': '#/definitions/bankAgentPhone'},
+            'bankSubagentPhone': {'$ref': '#/definitions/bankSubagentPhone'},
+            'bankAgentOperation': {'$ref': '#/definitions/bankAgentOperation'},
+            'bankSubagentOperation': {'$ref': '#/definitions/bankSubagentOperation'},
+            'bankAgentRemuneration': {'$ref': '#/definitions/bankAgentRemuneration'},
+            'operatorName': {'$ref': '#/definitions/operatorName'},
+            'operatorAddress': {'$ref': '#/definitions/operatorAddress'},
+            'operatorInn': {'$ref': '#/definitions/operatorInn'},
+            'modifiers': {'$ref': '#/definitions/modifiers'},
+            'nds18': {'$ref': '#/definitions/nds18'},
+            'nds10': {'$ref': '#/definitions/nds10'},
+            'nds0': {'$ref': '#/definitions/nds0'},
+            'ndsNo': {'$ref': '#/definitions/ndsNo'},
+            'ndsCalculated18': {'$ref': '#/definitions/ndsCalculated18'},
+            'ndsCalculated10': {'$ref': '#/definitions/ndsCalculated10'},
+            'totalSum': {'$ref': '#/definitions/totalSum'},
+            'cashTotalSum': {'$ref': '#/definitions/cashTotalSum'},
+            'ecashTotalSum': {'$ref': '#/definitions/ecashTotalSum'},
+            'fiscalDocumentNumber': {'$ref': '#/definitions/fiscalDocumentNumber'},
+            'fiscalSign': {'$ref': '#/definitions/fiscalSign'},
+            'properties': {'$ref': '#/definitions/properties'},
+        },
+        'required': [
+            'user',
+            'userInn',
+            'requestNumber',
+            'dateTime',
+            'shiftNumber',
+            'operationType',
+            'taxationType',
+            'operator',
+            'kktRegId',
+            'fiscalDriveNumber',
+            'totalSum',
+            'cashTotalSum',
+            'ecashTotalSum',
+            'fiscalDocumentNumber',
+            'fiscalSign',
+        ],
+    },
+
     'properties': {
         # TODO: Incomplete.
         'fiscalReport': {
@@ -800,20 +953,8 @@ SCHEMA = {
             'description': 'Отчет о регистрации',
             'tag': 1,
             'properties': {
-                'autoMode': {
-                    'type': 'number',
-                    'minimum': 0,
-                    'maximum': 1,
-                    'description': 'автоматический режим',
-                    'tag': '1001',
-                },
-                'offlineMode': {
-                    'type': 'number',
-                    'minimum': 0,
-                    'maximum': 1,
-                    'description': 'автономный режим',
-                    'tag': '1002',
-                },
+                'autoMode': {'$ref': '#/definitions/autoMode'},
+                'offlineMode': {'$ref': '#/definitions/offlineMode'},
                 'user': {'$ref': '#/definitions/user'},
             },
             'required': [
@@ -921,6 +1062,14 @@ SCHEMA = {
                 'fiscalSign',
             ],
         },
+        # 'bso': {
+        #     'tag': 4,
+        #     'type': 'object',
+        #     'description': 'БСО',
+        #     '$properties': '#/properties/receipt/properties',
+        #     'additionalProperties': False,
+        #     '$required': '#/properties/receipt/required',
+        # }
     },
 
     'additionalProperties': False,
