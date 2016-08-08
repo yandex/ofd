@@ -202,10 +202,14 @@ class SessionHeader(object):
     MAGIC_ID, PVERS_ID, PVERA_ID = range(3)
     MAGIC, = struct.unpack('<I', bytearray.fromhex('2a08410a'))
     PVERS, = struct.unpack('<H', bytearray.fromhex('81a2'))
-    PVERA, = struct.unpack('<H', bytearray.fromhex('0001'))
+    PVERA = {
+        struct.unpack('<H', bytearray.fromhex('0001'))[0],
+        struct.unpack('<H', bytearray.fromhex('0002'))[0]
+    }
     STRUCT = struct.Struct('<IHH16sHHH')
 
-    def __init__(self, fs_id, length, flags, crc):
+    def __init__(self, pva, fs_id, length, flags, crc):
+        self.pva = pva
         # Номер ФН.
         self.fs_id = fs_id
         self.length = length
@@ -216,7 +220,7 @@ class SessionHeader(object):
         return self.STRUCT.pack(
             self.MAGIC,
             self.PVERS,
-            self.PVERA,
+            struct.unpack('<H', bytearray.fromhex('0001'))[0],
             self.fs_id,
             self.length,
             self.flags,
@@ -232,12 +236,12 @@ class SessionHeader(object):
         if pack[cls.MAGIC_ID] != cls.MAGIC:
             raise ValueError('invalid protocol signature')
         if pack[cls.PVERS_ID] != cls.PVERS:
-            # raise ValueError('invalid session protocol version')
-            pass
-        if pack[cls.PVERA_ID] != cls.PVERA:
+            raise ValueError('invalid session protocol version')
+
+        if pack[cls.PVERA_ID] not in cls.PVERA:
             raise ValueError('invalid application protocol version')
 
-        return SessionHeader(*pack[cls.PVERA_ID + 1:])
+        return SessionHeader(pack[cls.PVERA_ID], *pack[cls.PVERA_ID + 1:])
 
     def __str__(self):
         return 'Заголовок Сообщения сеансового уровня\n' \
@@ -250,7 +254,7 @@ class SessionHeader(object):
                '{:24}: {}'.format(
                     'Сигнатура', self.MAGIC,
                     'Версия S-протокола', self.PVERS,
-                    'Версия A-протокола', self.PVERA,
+                    'Версия A-протокола', self.pva,
                     'Номер ФН', self.fs_id,
                     'Размер тела', self.length,
                     'Флаги', self.flags,
