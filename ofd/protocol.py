@@ -556,10 +556,21 @@ SCHEMA = {
             'description': 'кассир',
             'maxLength': 64,
         },
+        'quantity': {
+            'tag': 1023,
+            'type': 'number',
+            'description': 'количество',
+        },
         'operatorName': {
             'tag': 1026,
             'type': 'string',
             'description': 'наименование оператора по переводу денежных средств',
+            'maxLength': 64,
+        },
+        'name': {
+            'tag': 1030,
+            'type': 'string',
+            'description': 'наименование товара',
             'maxLength': 64,
         },
         'cashTotalSum': {
@@ -596,6 +607,11 @@ SCHEMA = {
             'type': 'number',
             'description': 'номер чека за смену',
         },
+        'sum': {
+            'tag': 1043,
+            'type': 'number',
+            'description': 'общая стоимость позиции с учетом скидок и наценок',
+        },
         'bankAgentOperation': {
             'tag': 1044,
             'type': 'string',
@@ -625,8 +641,30 @@ SCHEMA = {
             'tag': 1059,
             'type': 'array',
             'description': 'наименование товара (реквизиты)',
+            'items': [
+                {
+                    'type': 'object',
+                    'properties': {
+                        'name': {'$ref': '#/definitions/name'},
+                        'barcode': {'$ref': '#/definitions/barcode'},
+                        'price': {'$ref': '#/definitions/price'},
+                        'quantity': {'$ref': '#/definitions/quantity'},
+                        'modifiers': {'$ref': '#/definitions/modifiers'},
+                        'nds18': {'$ref': '#/definitions/nds18'},
+                        'nds10': {'$ref': '#/definitions/nds10'},
+                        'nds0': {'$ref': '#/definitions/nds0'},
+                        'ndsNo': {'$ref': '#/definitions/ndsNo'},
+                        'ndsCalculated18': {'$ref': '#/definitions/ndsCalculated18'},
+                        'ndsCalculated10': {'$ref': '#/definitions/ndsCalculated10'},
+                        'sum': {'$ref': '#/definitions/sum'},
+                        'properties': {'$ref': '#/definitions/properties'},
+                    },
+                    'additionalProperties': False,
+                    'required': ['name', 'quantity', 'sum'],
+                },
+            ],
         },
-        # TODO: В налоговом документе это поле имеет тэг 1062
+        # TODO: В налоговом документе это поле имеет тэг 1062.
         'taxationType': {
             'tag': 1055,
             'type': 'number',
@@ -666,6 +704,17 @@ SCHEMA = {
             'tag': 1077,
             'type': 'number',
             'description': 'фискальный признак документа',
+        },
+        'price': {
+            'tag': 1079,
+            'type': 'number',
+            'description': 'цена за единицу',
+        },
+        'barcode': {
+            'tag': 1080,
+            'type': 'string',
+            'description': 'штриховой код EAN13',
+            'maxLength': 16,
         },
         'ecashTotalSum': {
             'tag': 1081,
