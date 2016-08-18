@@ -489,6 +489,7 @@ DOCUMENTS = {
     1113: String(u'discountName', u'наименование скидки', 64),
     1114: String(u'markupName', u'наименование наценки', 64),
     1115: String(u'addressToCheckFiscalSign', u'адрес сайта для проверки ФП', 256),
+    1116: U32(u'notTransmittedDocumentNumber', u'номер первого непереданного документа'),
     1117: String(u'senderAddress', u'адрес отправителя', 64),
     1118: U32(u'receiptsQuantity', u'количество кассовых чеков за смену'),  # TODO: Имя придумал сам, конфликт с 1111.
     1119: String(u'operatorPhoneToReceive', u'телефон оператора по приему платежей', 19),
