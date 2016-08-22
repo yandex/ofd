@@ -318,6 +318,7 @@ class FrameHeader(object):
     def unpack_from_raw(cls, data):
         """
         Unpack container header directly from bytearray without `length` and `CRC` fields.
+
         :param data: container header.
         :return: structured ContainerHeader.
         """
@@ -449,7 +450,7 @@ DOCUMENTS = {
     1072: VLN(u'<unknown-1072>', u'Сумма налога', maxlen=8),
     1073: String(u'bankAgentPhone', u'Телефон банковского агента', maxlen=19),
     1074: String(u'paymentAgentPhone', u'Телефон платежного агента', maxlen=19),
-    1075: String(u'operatorPhone', u'Телефон оператора по переводу денежных средств', maxlen=19),
+    1075: String(u'operatorPhoneToTransfer', u'Телефон оператора по переводу денежных средств', maxlen=19),
     1076: String(u'type', u'Тип сообщения', maxlen=64),
     1077: VLN(u'fiscalSign', u'фискальный признак документа', maxlen=6),
     1078: ByteArray(u'<unknown-1078>', u'фискальный признак оператора', maxlen=8),
@@ -791,7 +792,7 @@ SCHEMA = {
             'description': 'телефон платежного агента',
             'maxLength': 19,
         },
-        'operatorPhone': {
+        'operatorPhoneToTransfer': {
             'tag': 1075,
             'type': 'string',
             'description': 'телефон оператора по переводу денежных средств',
@@ -965,7 +966,6 @@ SCHEMA = {
             'description': 'адрес отправителя',
             'maxLength': 64,
         },
-        # TODO: Название сам придумал, в документе дубликат - documentsQuantity.
         'receiptsQuantity': {
             'tag': 1118,
             'type': 'number',
@@ -1001,7 +1001,7 @@ SCHEMA = {
             'paymentAgentPhone': {'$ref': '#/definitions/paymentAgentPhone'},
             'paymentSubagentPhone': {'$ref': '#/definitions/paymentSubagentPhone'},
             'operatorPhoneToReceive': {'$ref': '#/definitions/operatorPhoneToReceive'},
-            'operatorPhone': {'$ref': '#/definitions/operatorPhone'},
+            'operatorPhoneToTransfer': {'$ref': '#/definitions/operatorPhoneToTransfer'},
             'bankAgentPhone': {'$ref': '#/definitions/bankAgentPhone'},
             'bankSubagentPhone': {'$ref': '#/definitions/bankSubagentPhone'},
             'bankAgentOperation': {'$ref': '#/definitions/bankAgentOperation'},
@@ -1204,7 +1204,7 @@ SCHEMA = {
                 'paymentAgentPhone': {'$ref': '#/definitions/paymentAgentPhone'},
                 'paymentSubagentPhone': {'$ref': '#/definitions/paymentSubagentPhone'},
                 'operatorPhoneToReceive': {'$ref': '#/definitions/operatorPhoneToReceive'},
-                'operatorPhone': {'$ref': '#/definitions/operatorPhone'},
+                'operatorPhoneToTransfer': {'$ref': '#/definitions/operatorPhoneToTransfer'},
                 'bankAgentPhone': {'$ref': '#/definitions/bankAgentPhone'},
                 'bankSubagentPhone': {'$ref': '#/definitions/bankSubagentPhone'},
                 'bankAgentOperation': {'$ref': '#/definitions/bankAgentOperation'},
@@ -1300,6 +1300,33 @@ SCHEMA = {
                 'fiscalSign',
             ],
         },
+        'closeArchive': {
+            'tag': 6,
+            'type': 'object',
+            'description': 'Отчет о закрытии фискального накопителя',
+            'properties': {
+                'userInn': {'$ref': '#/definitions/userInn'},
+                'retailPlaceAddress': {'$ref': '#/definitions/retailPlaceAddress'},
+                'operator': {'$ref': '#/definitions/operator'},
+                'dateTime': {'$ref': '#/definitions/dateTime'},
+                'kktRegId': {'$ref': '#/definitions/kktRegId'},
+                'fiscalDriveNumber': {'$ref': '#/definitions/fiscalDriveNumber'},
+                'fiscalDocumentNumber': {'$ref': '#/definitions/fiscalDocumentNumber'},
+                'fiscalSign': {'$ref': '#/definitions/fiscalSign'},
+                'properties': {'$ref': '#/definitions/properties'},
+            },
+            'additionalProperties': False,
+            'required': [
+                'userInn',
+                'retailPlaceAddress',
+                'operator',
+                'dateTime',
+                'kktRegId',
+                'fiscalDriveNumber',
+                'fiscalDocumentNumber',
+                'fiscalSign',
+            ],
+        },
     },
 
     'additionalProperties': False,
@@ -1310,6 +1337,7 @@ SCHEMA = {
         {'required': ['receipt']},
         # {'required': ['bso']},
         {'required': ['closeShift']},
+        {'required': ['closeArchive']},
     ],
 }
 
