@@ -1,0 +1,130 @@
+{
+    "$schema": "http://json-schema.org/draft-04/schema#",
+    "type": "object",
+    "description": "Документ полученый от ККТ",
+    "properties": {
+        "document": {
+            "type": "object",
+            "description": "Документ",
+            "properties": {
+                "closeShift": {
+                    "type": "object",
+                    "description": "Отчёт о закрытии смены",
+                    "properties": {
+                        "code": {
+                            "type": "integer",
+                            "enum": [
+                                5
+                            ]
+                        },
+                        "user": {
+                            "$ref": "dictionary.schema.json#/definitions/user"
+                        },
+                        "userInn": {
+                            "$ref": "dictionary.schema.json#/definitions/userInn"
+                        },
+                        "operator": {
+                            "$ref": "dictionary.schema.json#/definitions/operator"
+                        },
+                        "dateTime": {
+                            "$ref": "dictionary.schema.json#/definitions/dateTime"
+                        },
+                        "shiftNumber": {
+                            "$ref": "dictionary.schema.json#/definitions/shiftNumber"
+                        },
+                        "receiptsQuantity": {
+                            "type": "integer",
+                            "minimum": 0,
+                            "maximum": 4294967295,
+                            "description": "количество кассовых чеков за смену"
+                        },
+                        "documentsQuantity": {
+                            "type": "integer",
+                            "minimum": 0,
+                            "maximum": 4294967295,
+                            "description": "количество фискальных документов за смену"
+                        },
+                        "notTransmittedDocumentsQuantity": {
+                            "$ref": "dictionary.schema.json#/definitions/notTransmittedDocumentsQuantity"
+                        },
+                        "notTransmittedDocumentsDateTime": {
+                            "$ref": "dictionary.schema.json#/definitions/notTransmittedDocumentsDateTime"
+                        },
+                        "ofdResponseTimeoutSign": {
+                            "type": "integer",
+                            "minimum": 0,
+                            "maximum": 255,
+                            "description": "признак превышения времени ожидания ответа ОФД"
+                        },
+                        "fiscalDriveReplaceRequiredSign": {
+                            "type": "integer",
+                            "minimum": 0,
+                            "maximum": 255,
+                            "description": "признак необходимости срочной замены ФН"
+                        },
+                        "fiscalDriveMemoryExceededSign": {
+                            "type": "integer",
+                            "minimum": 0,
+                            "maximum": 255,
+                            "description": "признак переполнения памяти ФН"
+                        },
+                        "fiscalDriveExhaustionSign": {
+                            "type": "integer",
+                            "minimum": 0,
+                            "maximum": 255,
+                            "description": "признак исчерпания ресурса ФН"
+                        },
+                        "kktRegId": {
+                            "$ref": "dictionary.schema.json#/definitions/kktRegId"
+                        },
+                        "fiscalDriveNumber": {
+                            "$ref": "dictionary.schema.json#/definitions/fiscalDriveNumber"
+                        },
+                        "fiscalDocumentNumber": {
+                            "$ref": "dictionary.schema.json#/definitions/fiscalDocumentNumber"
+                        },
+                        "fiscalSign": {
+                            "$ref": "dictionary.schema.json#/definitions/fiscalSign"
+                        },
+                        "message": {
+                            "$ref": "dictionary.schema.json#/definitions/message"
+                        },
+                        "properties": {
+                            "$ref": "dictionary.schema.json#/definitions/propertiesType"
+                        },
+                        "rawData": {
+                            "$ref": "dictionary.schema.json#/definitions/rawData"
+                        }
+                    },
+                    "required": [
+                        "code",
+                        "user",
+                        "userInn",
+                        "operator",
+                        "dateTime",
+                        "shiftNumber",
+                        "receiptsQuantity",
+                        "documentsQuantity",
+                        "notTransmittedDocumentsQuantity",
+                        "notTransmittedDocumentsDateTime",
+                        "ofdResponseTimeoutSign",
+                        "fiscalDriveReplaceRequiredSign",
+                        "fiscalDriveMemoryExceededSign",
+                        "fiscalDriveExhaustionSign",
+                        "kktRegId",
+                        "fiscalDriveNumber",
+                        "fiscalDocumentNumber",
+                        "fiscalSign",
+                        "rawData"
+                    ]
+                }
+            },
+            "required": [
+                "closeShift"
+            ]
+        }
+    },
+    "required": [
+        "document"
+    ]
+}
