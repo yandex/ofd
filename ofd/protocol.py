@@ -1,10 +1,15 @@
 # coding: utf8
 
 import array
+import json
+import os
+
 import crcmod
 import crcmod.predefined
 import decimal
 import struct
+
+import jsonschema
 
 VERSION = (1, 1, 0, 'ATOL-3')
 
@@ -430,14 +435,14 @@ DOCUMENTS = {
     1052: Byte(u'fiscalDriveMemoryExceededSign', u'Признак переполнения памяти ФН'),
     1053: Byte(u'ofdResponseTimeoutSign', u'Признак превышения времени ожидания ответа ОФД'),
     1054: Byte(u'operationType', u'Признак расчета'),
-    1055: Byte(u'taxationType', u'применяемая система налогообложения'),
+    1055: Byte(u'taxationType?', u'применяемая система налогообложения'),
     1056: Byte(u'encryptionSign', u'Признак шифрования'),
     1057: Byte(u'<unknown-1057>', u'Применение платежными агентами (субагентами)'),
     1058: Byte(u'<unknown-1058>', u'Применение банковскими агентами (субагентами)'),
     1059: STLV(u'items', u'наименование товара (реквизиты)', 328, '*'),
     1060: String(u'<unknown-1060>', u'Сайт налогового органа', maxlen=64),
     1061: String(u'<unknown-1061>', u'Сайт ОФД', maxlen=64),
-    1062: Byte(u'taxationType-2', u'системы налогообложения'),  # TODO: Bitfields actually, read more. Also dup with 1055.
+    1062: Byte(u'taxationType', u'система налогообложения'),
     1063: FVLN(u'discount', u'Скидка (ставка)', 8),
     1064: VLN(u'discountSum', u'Скидка (сумма)'),
     1065: String(u'<unknown-1065>', u'Сокращенное наименование налога', maxlen=10),
@@ -495,6 +500,14 @@ DOCUMENTS = {
     1117: String(u'senderAddress', u'адрес отправителя', 64),
     1118: U32(u'receiptsQuantity', u'количество кассовых чеков за смену'),  # TODO: Имя придумал сам, конфликт с 1111.
     1119: String(u'operatorPhoneToReceive', u'телефон оператора по приему платежей', 19),
+    # 1120:
+    # 1121:
+    # 1122:
+    # 1123:
+    # 1124:
+    # 1125:
+    # 1126:
+    # 1127:
 }
 
 SCHEMA = {
@@ -1343,6 +1356,17 @@ SCHEMA = {
 
 DOCS_BY_NAME = dict((doc.name, (ty, doc)) for ty, doc in DOCUMENTS.items())
 DOCS_BY_DESC = dict((doc.desc, (ty, doc)) for ty, doc in DOCUMENTS.items())
+
+
+class DocumentValidator(object):
+    def __init__(self, path):
+        path = os.path.join(path, 'document.schema.json')
+        with open(path, encoding='utf-8') as fh:
+            self._root = json.loads(fh.read())
+            self._resolver = jsonschema.RefResolver('file://' + path, None)
+
+    def validate(self, doc):
+        jsonschema.validate(doc, self._root, resolver=self._resolver)
 
 
 def pack_json(doc, docs=DOCS_BY_DESC):

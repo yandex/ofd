@@ -1,0 +1,26 @@
+{
+    "$schema": "http://json-schema.org/draft-04/schema#",
+    "type": "object",
+    "description": "Документ полученый от ККТ",
+    "properties": {
+        "document": {
+            "type": "object",
+            "description": "1",
+            "properties": {
+                "fiscalReport": {
+                    "$ref": "fiscalReport.schema.json#/properties/document/properties/fiscalReport"
+                }
+            },
+            "oneOf": [
+                {
+                    "required": [
+                        "fiscalReport"
+                    ]
+                }
+            ]
+        }
+    },
+    "required": [
+        "document"
+    ]
+}

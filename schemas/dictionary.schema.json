@@ -1,0 +1,392 @@
+{
+    "$schema": "http://json-schema.org/draft-04/schema#",
+    "type": "object",
+    "definitions": {
+        "shiftNumber": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 4294967295,
+            "description": "номер смены"
+        },
+        "message": {
+            "type": "array",
+            "uniqueItems": false,
+            "description": "сообщение оператору",
+            "items": {
+                "type": "object",
+                "properties": {
+                    "type": {
+                        "type": "string",
+                        "minLength": 1,
+                        "maxLength": 64
+                    },
+                    "message": {
+                        "type": "string",
+                        "maxLength": 256
+                    }
+                }
+            },
+            "required": [
+                "type",
+                "message"
+            ]
+        },
+        "propertiesType": {
+            "type": "array",
+            "uniqueItems": false,
+            "description": "сообщение оператору",
+            "items": {
+                "type": "object",
+                "properties": {
+                    "key": {
+                        "type": "string",
+                        "minLength": 1,
+                        "maxLength": 64
+                    },
+                    "value": {
+                        "type": "string",
+                        "maxLength": 256
+                    }
+                },
+                "required": [
+                    "key",
+                    "value"
+                ]
+            }
+        },
+        "fiscalDriveNumber": {
+            "type": "string",
+            "minLength": 16,
+            "maxLength": 16,
+            "description": "заводской номер фискального накопителя"
+        },
+        "kktRegId": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 20,
+            "description": "регистрационный номер ККТ"
+        },
+        "sum": {
+            "type": "integer",
+            "minimum": 0,
+            "description": "общая стоимость с учетом скидок и наценок, в копейках"
+        },
+        "modifiers": {
+            "type": "object",
+            "description": "скидка/наценка",
+            "properties": {
+                "discountName": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 64,
+                    "description": "наименование скидкм"
+                },
+                "markupName": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 64,
+                    "description": "наименование наценки"
+                },
+                "discount": {
+                    "type": "number",
+                    "minimum": 0,
+                    "description": "скидка (ставка) %"
+                },
+                "discountSum": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "description": "скидка (сумма), в копейках"
+                },
+                "markup": {
+                    "type": "number",
+                    "minimum": 0,
+                    "description": "наценка (ставка) %"
+                },
+                "markupSum": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "description": "наценка (сумма), в копейках"
+                }
+            }
+        },
+        "user": {
+            "type": "string",
+            "minLength": 0,
+            "maxLength": 256,
+            "description": "наименование пользователя"
+        },
+        "userInn": {
+            "type": "string",
+            "pattern": "^([0-9][1-9]|[1-9][0-9])[0-9]{8,10}$",
+            "description": "ИНН пользователя"
+        },
+        "operationType": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 4,
+            "description": "признак расчета"
+        },
+        "buyerAddress": {
+            "type": "string",
+            "minLength": 0,
+            "maxLength": 64,
+            "description": "адрес покупателя"
+        },
+        "dateTime": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 4294967295,
+            "description": "дата, время совершения транзакции"
+        },
+        "taxationType": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 256,
+            "description": "применяемая система налогообложения"
+        },
+        "fiscalSign": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 281474976710655,
+            "description": "фискальный признак документа"
+        },
+        "requestNumber": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 4294967295,
+            "description": "номер чека за смену"
+        },
+        "operator": {
+            "type": "string",
+            "minLength": 0,
+            "maxLength": 256,
+            "description": "кассир"
+        },
+        "fiscalDocumentNumber": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 4294967295,
+            "description": "порядковый номер фискального документа"
+        },
+        "receiptItems": {
+            "type": "array",
+            "uniqueItems": false,
+            "description": "реквизиты товаров",
+            "items": {
+                "type": "object",
+                "properties": {
+                    "name": {
+                        "type": "string",
+                        "minLength": 1,
+                        "maxLength": 64,
+                        "description": "наименование товара"
+                    },
+                    "barcode": {
+                        "type": "string",
+                        "minLength": 0,
+                        "maxLength": 16,
+                        "description": "штриховой код EAN13"
+                    },
+                    "quantity": {
+                        "type": "number",
+                        "minimum": 0,
+                        "description": "количество"
+                    },
+                    "price": {
+                        "type": "integer",
+                        "minimum": 0,
+                        "description": "цена за единицу"
+                    },
+                    "modifiers": {
+                        "type": "array",
+                        "uniqueItems": false,
+                        "description": "скидки/наценки",
+                        "items": {
+                            "$ref": "#/definitions/modifiers"
+                        }
+                    },
+                    "ndsCalculated18": {
+                        "$ref": "#/definitions/sum"
+                    },
+                    "ndsCalculated10": {
+                        "$ref": "#/definitions/sum"
+                    },
+                    "sum": {
+                        "type": "integer",
+                        "minimum": 0,
+                        "description": "общая стоимость позиции с учетом скидок и наценок, в копейках"
+                    },
+                    "properties": {
+                        "$ref": "#/definitions/propertiesType"
+                    }
+                },
+                "required": [
+                    "name",
+                    "quantity",
+                    "sum"
+                ]
+            }
+        },
+        "senderAddress": {
+            "type": "string",
+            "minLength": 0,
+            "maxLength": 64,
+            "description": "адрес отправителя"
+        },
+        "addressToCheckFiscalSign": {
+            "type": "string",
+            "minLength": 0,
+            "maxLength": 256,
+            "description": "адрес сайта для проверки ФП"
+        },
+        "paymentAgentRemuneration": {
+            "type": "number",
+            "minimum": 0,
+            "description": "размер вознаграждения платежного агента (субагента)"
+        },
+        "paymentAgentPhone": {
+            "type": "string",
+            "minLength": 0,
+            "maxLength": 19,
+            "description": "телефон платежного агента"
+        },
+        "paymentSubagentPhone": {
+            "type": "string",
+            "minLength": 0,
+            "maxLength": 19,
+            "description": "телефон платежного субагента"
+        },
+        "operatorPhoneToReceive": {
+            "type": "string",
+            "minLength": 0,
+            "maxLength": 19,
+            "description": "телефон оператора по приему платежей"
+        },
+        "operatorPhoneToTransfer": {
+            "type": "string",
+            "minLength": 0,
+            "maxLength": 19,
+            "description": "телефон оператора по переводу денежных средств"
+        },
+        "bankAgentPhone": {
+            "type": "string",
+            "minLength": 0,
+            "maxLength": 19,
+            "description": "телефон банковского агента"
+        },
+        "bankSubagentPhone": {
+            "type": "string",
+            "minLength": 0,
+            "maxLength": 19,
+            "description": "телефон банковского субагента"
+        },
+        "bankAgentOperation": {
+            "type": "string",
+            "minLength": 0,
+            "maxLength": 24,
+            "description": "операция банковского агента"
+        },
+        "bankSubagentOperation": {
+            "type": "string",
+            "minLength": 0,
+            "maxLength": 24,
+            "description": "операция банковского субагента"
+        },
+        "bankAgentRemuneration": {
+            "type": "number",
+            "minimum": 0,
+            "description": "размер вознаграждения банковского агента (субагента)"
+        },
+        "operatorName": {
+            "type": "string",
+            "minLength": 0,
+            "maxLength": 64,
+            "description": "наименование оператора по переводу денежных средств"
+        },
+        "operatorAddress": {
+            "type": "string",
+            "minLength": 0,
+            "maxLength": 256,
+            "description": "адрес оператора по переводу денежных средств"
+        },
+        "operatorInn": {
+            "type": "string",
+            "pattern": "([0-9][1-9]|[1-9][0-9])[0-9]{8,10}",
+            "description": "ИНН оператора по переводу денежных средств"
+        },
+        "offlineMode": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 255,
+            "description": "автономный режим"
+        },
+        "bsoSign": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 255,
+            "description": "признак БСО"
+        },
+        "serviceSign": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 255,
+            "description": "признак услуги"
+        },
+        "encryptionSign": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 255,
+            "description": "признак шифрования"
+        },
+        "autoMode": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 255,
+            "description": "автоматический режим"
+        },
+        "machineNumber": {
+            "type": "string",
+            "minLength": 12,
+            "maxLength": 12,
+            "description": "номер автомата"
+        },
+        "internetSign": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 255,
+            "description": "признак рассчетов в Интернете"
+        },
+        "retailPlaceAddress": {
+            "type": "string",
+            "maxLength": 256,
+            "description": "адрес (место) рассчетов"
+        },
+        "ofdInn": {
+            "type": "string",
+            "pattern": "^([0-9][1-9]|[1-9][0-9])[0-9]{8,10}$",
+            "description": "ОФД ИНН"
+        },
+        "kktNumber": {
+            "type": "string",
+            "maxLength": 20,
+            "description": "заводской номер ККТ"
+        },
+        "rawData": {
+            "type": "string",
+            "minLength": 1,
+            "description": "бинарное представление документа в формате протокола ККТ с ФП2"
+        },
+        "notTransmittedDocumentsQuantity": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 4294967295,
+            "description": "кол-во неподтвержденных документов ФД"
+        },
+        "notTransmittedDocumentsDateTime": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 4294967295,
+            "description": "дата и время первого из непереданных ФД"
+        }
+    }
+}
