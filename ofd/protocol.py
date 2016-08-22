@@ -516,7 +516,7 @@ DOCS_BY_DESC = dict((doc.desc, (ty, doc)) for ty, doc in DOCUMENTS.items())
 
 
 class NullValidator(object):
-    def validate(self, doc):
+    def validate(self, doc: dict):
         pass
 
 
@@ -527,11 +527,11 @@ class DocumentValidator(object):
             self._root = json.loads(fh.read())
             self._resolver = jsonschema.RefResolver('file://' + path, None)
 
-    def validate(self, doc):
+    def validate(self, doc: dict):
         jsonschema.validate(doc, self._root, resolver=self._resolver)
 
 
-def pack_json(doc, docs=DOCS_BY_DESC):
+def pack_json(doc: dict, docs: dict=DOCS_BY_DESC) -> bytes:
     """
     Packs the given JSON document into a bytearray using optionally specified documents container.
 
