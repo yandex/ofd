@@ -9,12 +9,28 @@
             "properties": {
                 "fiscalReport": {
                     "$ref": "fiscalReport.schema.json#/properties/document/properties/fiscalReport"
+                },
+                "openShift": {
+                    "$ref": "openShift.schema.json#/properties/document/properties/openShift"
+                },
+                "receipt": {
+                    "$ref": "receipt.schema.json#/properties/document/oneOf/0/properties/receipt"
                 }
             },
             "oneOf": [
                 {
                     "required": [
                         "fiscalReport"
+                    ]
+                },
+                {
+                    "required": [
+                        "openShift"
+                    ]
+                },
+                {
+                    "required": [
+                        "receipt"
                     ]
                 }
             ]

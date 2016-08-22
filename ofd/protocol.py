@@ -1358,6 +1358,11 @@ DOCS_BY_NAME = dict((doc.name, (ty, doc)) for ty, doc in DOCUMENTS.items())
 DOCS_BY_DESC = dict((doc.desc, (ty, doc)) for ty, doc in DOCUMENTS.items())
 
 
+class NullValidator(object):
+    def validate(self, doc):
+        pass
+
+
 class DocumentValidator(object):
     def __init__(self, path):
         path = os.path.join(path, 'document.schema.json')

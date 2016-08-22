@@ -1,0 +1,83 @@
+{
+    "$schema": "http://json-schema.org/draft-04/schema#",
+    "type": "object",
+    "description": "Документ полученый от ККТ",
+    "properties": {
+        "document": {
+            "type": "object",
+            "description": "Документ",
+            "properties": {
+                "openShift": {
+                    "type": "object",
+                    "description": "Отчет об открытии смены",
+                    "properties": {
+                        "code": {
+                            "type": "integer",
+                            "enum": [
+                                2
+                            ]
+                        },
+                        "user": {
+                            "$ref": "dictionary.schema.json#/definitions/user"
+                        },
+                        "userInn": {
+                            "$ref": "dictionary.schema.json#/definitions/userInn"
+                        },
+                        "operator": {
+                            "$ref": "dictionary.schema.json#/definitions/operator"
+                        },
+                        "retailPlaceAddress": {
+                            "$ref": "dictionary.schema.json#/definitions/retailPlaceAddress"
+                        },
+                        "dateTime": {
+                            "$ref": "dictionary.schema.json#/definitions/dateTime"
+                        },
+                        "shiftNumber": {
+                            "$ref": "dictionary.schema.json#/definitions/shiftNumber"
+                        },
+                        "kktRegId": {
+                            "$ref": "dictionary.schema.json#/definitions/kktRegId"
+                        },
+                        "fiscalDriveNumber": {
+                            "$ref": "dictionary.schema.json#/definitions/fiscalDriveNumber"
+                        },
+                        "fiscalDocumentNumber": {
+                            "$ref": "dictionary.schema.json#/definitions/fiscalDocumentNumber"
+                        },
+                        "fiscalSign": {
+                            "$ref": "dictionary.schema.json#/definitions/fiscalSign"
+                        },
+                        "message": {
+                            "$ref": "dictionary.schema.json#/definitions/message"
+                        },
+                        "properties": {
+                            "$ref": "dictionary.schema.json#/definitions/propertiesType"
+                        },
+                        "rawData": {
+                            "$ref": "dictionary.schema.json#/definitions/rawData"
+                        }
+                    },
+                    "required": [
+                        "code",
+                        "user",
+                        "userInn",
+                        "operator",
+                        "dateTime",
+                        "shiftNumber",
+                        "kktRegId",
+                        "fiscalDriveNumber",
+                        "fiscalDocumentNumber",
+                        "fiscalSign",
+                        "rawData"
+                    ]
+                }
+            },
+            "required": [
+                "openShift"
+            ]
+        }
+    },
+    "required": [
+        "document"
+    ]
+}
