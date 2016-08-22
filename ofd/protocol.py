@@ -367,6 +367,7 @@ class FrameHeader(object):
                     'Номер ФД', self.docnum(),
                     'Служебные данные 2', self.extra2)
 
+DOCUMENT_CODES = {'receipt', 'receiptCorrection', 'bso', 'bsoCorrection'}
 
 DOCUMENTS = {
     1: STLV(u'fiscalReport', u'Отчёт о фискализации', maxlen=658),
@@ -435,14 +436,14 @@ DOCUMENTS = {
     1052: Byte(u'fiscalDriveMemoryExceededSign', u'Признак переполнения памяти ФН'),
     1053: Byte(u'ofdResponseTimeoutSign', u'Признак превышения времени ожидания ответа ОФД'),
     1054: Byte(u'operationType', u'Признак расчета'),
-    1055: Byte(u'taxationType?', u'применяемая система налогообложения'),
+    1055: Byte(u'taxationType', u'применяемая система налогообложения'),
     1056: Byte(u'encryptionSign', u'Признак шифрования'),
     1057: Byte(u'<unknown-1057>', u'Применение платежными агентами (субагентами)'),
     1058: Byte(u'<unknown-1058>', u'Применение банковскими агентами (субагентами)'),
     1059: STLV(u'items', u'наименование товара (реквизиты)', 328, '*'),
     1060: String(u'<unknown-1060>', u'Сайт налогового органа', maxlen=64),
     1061: String(u'<unknown-1061>', u'Сайт ОФД', maxlen=64),
-    1062: Byte(u'taxationType', u'система налогообложения'),
+    1062: Byte(u'taxationType?', u'система налогообложения'),
     1063: FVLN(u'discount', u'Скидка (ставка)', 8),
     1064: VLN(u'discountSum', u'Скидка (сумма)'),
     1065: String(u'<unknown-1065>', u'Сокращенное наименование налога', maxlen=10),
