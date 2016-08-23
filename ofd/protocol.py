@@ -482,7 +482,7 @@ DOCUMENTS = {
     1098: UnixTime(u'notTransmittedDocumentsDateTime', u'дата и время первого из непереданных ФД'),
     # 1099:
     # 1100:
-    # 1101:
+    1101: Byte(u'correctionReasonCode', u'код причины перерегистрации', cardinality='+'),
     1102: VLN(u'nds18', u'НДС итога чека со ставкой 18%'),
     1103: VLN(u'nds10', u'НДС итога чека со ставкой 10%'),
     1104: VLN(u'nds0', u'НДС итога чека со ставкой 0%'),
