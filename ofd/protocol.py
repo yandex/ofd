@@ -443,7 +443,7 @@ DOCUMENTS = {
     1059: STLV(u'items', u'наименование товара (реквизиты)', 328, '*'),
     1060: String(u'<unknown-1060>', u'Сайт налогового органа', maxlen=64),
     1061: String(u'<unknown-1061>', u'Сайт ОФД', maxlen=64),
-    1062: Byte(u'taxationType?', u'система налогообложения'),
+    1062: Byte(u'taxationsType', u'системы налогообложения'),  # TODO: Имя придумал сам.
     1063: FVLN(u'discount', u'Скидка (ставка)', 8),
     1064: VLN(u'discountSum', u'Скидка (сумма)'),
     1065: String(u'<unknown-1065>', u'Сокращенное наименование налога', maxlen=10),

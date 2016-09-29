@@ -23,8 +23,8 @@
                         "userInn": {
                             "$ref": "dictionary.schema.json#/definitions/userInn"
                         },
-                        "taxationType": {
-                            "$ref": "dictionary.schema.json#/definitions/taxationType"
+                        "taxationsType": {
+                            "$ref": "dictionary.schema.json#/definitions/taxationsType"
                         },
                         "dateTime": {
                             "$ref": "dictionary.schema.json#/definitions/dateTime"
@@ -96,7 +96,7 @@
                         "code",
                         "user",
                         "userInn",
-                        "taxationType",
+                        "taxationsType",
                         "dateTime",
                         "kktRegId",
                         "offlineMode",

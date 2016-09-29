@@ -138,6 +138,12 @@
             "maximum": 4294967295,
             "description": "дата, время совершения транзакции"
         },
+        "taxationsType": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 256,
+            "description": "системы налогообложения"
+        },
         "taxationType": {
             "type": "integer",
             "minimum": 0,
