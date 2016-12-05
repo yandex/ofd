@@ -257,13 +257,13 @@ class SessionHeader(object):
                '{:24}: {}\n' \
                '{:24}: {:#b}\n' \
                '{:24}: {}'.format(
-                    'Сигнатура', self.MAGIC,
-                    'Версия S-протокола', self.PVERS,
-                    'Версия A-протокола', self.pva,
-                    'Номер ФН', self.fs_id,
-                    'Размер тела', self.length,
-                    'Флаги', self.flags,
-                    'Проверочный код (CRC)', self.crc)
+                                'Сигнатура', self.MAGIC,
+                                'Версия S-протокола', self.PVERS,
+                                'Версия A-протокола', self.pva,
+                                'Номер ФН', self.fs_id,
+                                'Размер тела', self.length,
+                                'Флаги', self.flags,
+                                'Проверочный код (CRC)', self.crc)
 
 
 class FrameHeader(object):
@@ -366,6 +366,7 @@ class FrameHeader(object):
                     'Номер ФН', self.devnum,
                     'Номер ФД', self.docnum(),
                     'Служебные данные 2', self.extra2)
+
 
 DOCUMENT_CODES = {'receipt', 'receiptCorrection', 'bso', 'bsoCorrection'}
 
