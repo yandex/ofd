@@ -93,7 +93,7 @@
                                 },
                                 {
                                     "properties": {
-                                        "receiptCode": {
+                                        "receiptCorrectionCode": {
                                             "type": "integer",
                                             "enum": [
                                                 31
@@ -101,7 +101,7 @@
                                         }
                                     },
                                     "required": [
-                                        "receiptCode"
+                                        "receiptCorrectionCode"
                                     ]
                                 }
                             ]
@@ -121,7 +121,7 @@
                                 },
                                 {
                                     "properties": {
-                                        "bsoCode": {
+                                        "bsoCorrectionCode": {
                                             "type": "integer",
                                             "enum": [
                                                 41
@@ -129,7 +129,7 @@
                                         }
                                     },
                                     "required": [
-                                        "bsoCode"
+                                        "bsoCorrectionCode"
                                     ]
                                 }
                             ]
