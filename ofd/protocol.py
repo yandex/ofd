@@ -620,3 +620,10 @@ def pack_json(doc: dict, docs: dict=DOCS_BY_DESC) -> bytes:
         wr += data
 
     return wr
+
+
+def extract_fiscal_sign_for_print(full_sign):
+    """Хак. ФПД занимает 6 байт, но на чеке печатаются байты с 2 по 5"""
+    bn = struct.pack('>Q', full_sign)
+    data = bn[2:6]
+    return struct.unpack('<Q', data + b'\x00' * (8 - len(data)))[0]
