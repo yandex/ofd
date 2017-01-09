@@ -3,7 +3,6 @@
 import array
 import json
 import os
-
 import crcmod
 import crcmod.predefined
 import decimal
@@ -18,15 +17,6 @@ SIGNATURE = array.array('B', [42, 8, 65, 10]).tostring()
 
 class ProtocolError(RuntimeError):
     pass
-
-
-class InvalidProtocolSignature(ProtocolError):
-    pass
-
-
-class InvalidProtocolDocument(ProtocolError):
-    def __init__(self):
-        super(InvalidProtocolDocument, self).__init__('invalid document')
 
 
 class Byte(object):
@@ -119,8 +109,8 @@ class ByteArray(object):
         if len(data) == 0:
             return ''
         if len(data) > self.maxlen:
-            raise ValueError('ByteArray actual size is greater than maximum')
-        return struct.unpack('{}s'.format(len(data)), data)[0]
+            raise ValueError('ByteArray actual size {} is greater than maximum {}'.format(len(data), self.maxlen))
+        return str(struct.unpack('{}s'.format(len(data)), data)[0])
 
 
 class UnixTime(object):
@@ -312,15 +302,37 @@ class FrameHeader(object):
             raise ValueError('data size must be 32')
         pack = cls.STRUCT.unpack(data)
 
-        if pack[cls.MSGTYPE_ID] != cls.MSGTYPE:
-            raise ValueError('invalid message type')
+        # if pack[cls.MSGTYPE_ID] != cls.MSGTYPE:
+        #     raise ValueError('invalid message type')
         if pack[cls.VERSION_ID] != cls.VERSION:
             raise ValueError('invalid protocol version')
 
         return FrameHeader(pack[0], pack[1], pack[3], *pack[5:])
 
     @classmethod
-    def unpack_from_raw(cls, data):
+    def unpack_from_raw(cls, data, msg_type=None):
+        """
+        Unpack container header directly from bytearray without `length` and `CRC` fields.
+
+        :param data: container header.
+        :param msg_type: expected message type, if not None method asserts actual msg type with expected and
+        throws ValueError exception if they are not equal
+        :return: structured ContainerHeader.
+        """
+        if len(data) != cls.STRUCT_TINY.size:
+            raise ValueError('data size must be 28')
+        pack = cls.STRUCT_TINY.unpack(data)
+
+        if msg_type and pack[cls.MSGTYPE_ID - 2] != msg_type:
+            raise ValueError('invalid message type')
+
+        if pack[cls.VERSION_ID - 2] != cls.VERSION:
+            raise ValueError('invalid protocol version')
+
+        return FrameHeader(0, 0, pack[1], *pack[3:])
+
+    @classmethod
+    def unpack_receipt_from_raw(cls, data):
         """
         Unpack container header directly from bytearray without `length` and `CRC` fields.
 
@@ -331,8 +343,8 @@ class FrameHeader(object):
             raise ValueError('data size must be 28')
         pack = cls.STRUCT_TINY.unpack(data)
 
-        if pack[cls.MSGTYPE_ID - 2] != cls.MSGTYPE:
-            raise ValueError('invalid message type')
+        # if pack[cls.MSGTYPE_ID - 2] != cls.MSGTYPE:
+        #     raise ValueError('invalid message type')
         if pack[cls.VERSION_ID - 2] != cls.VERSION:
             raise ValueError('invalid protocol version')
 
@@ -357,15 +369,15 @@ class FrameHeader(object):
                '{:26}: {}\n' \
                '{:26}: {}\n' \
                '{:26}: {}'.format(
-                    'Длина', self.length,
-                    'Проверочный код', self.crc,
-                    'Тип сообщения протокола', self.MSGTYPE,
-                    'Тип фискального документа', self.doctype,
-                    'Версия протокола', self.version,
-                    'Служебные данные 1', self.extra1,
-                    'Номер ФН', self.devnum,
-                    'Номер ФД', self.docnum(),
-                    'Служебные данные 2', self.extra2)
+                                'Длина', self.length,
+                                'Проверочный код', self.crc,
+                                'Тип сообщения протокола', self.MSGTYPE,
+                                'Тип фискального документа', self.doctype,
+                                'Версия протокола', self.version,
+                                'Служебные данные 1', self.extra1,
+                                'Номер ФН', self.devnum,
+                                'Номер ФД', self.docnum(),
+                                'Служебные данные 2', self.extra2)
 
 
 DOCUMENT_CODES = {'receipt', 'receiptCorrection', 'bso', 'bsoCorrection'}
@@ -460,7 +472,7 @@ DOCUMENTS = {
     1075: String(u'operatorPhoneToTransfer', u'Телефон оператора по переводу денежных средств', maxlen=19),
     1076: String(u'type', u'Тип сообщения', maxlen=64),
     1077: VLN(u'fiscalSign', u'фискальный признак документа', maxlen=6),
-    1078: ByteArray(u'<unknown-1078>', u'фискальный признак оператора', maxlen=8),
+    1078: ByteArray(u'<unknown-1078>', u'фискальный признак оператора', maxlen=18),  # изначально было 8
     1079: VLN(u'price', u'Цена за единицу'),
     1080: String(u'barcode', u'Штриховой код EAN13', maxlen=16),
     1081: VLN(u'ecashTotalSum', u'форма расчета – электронными'),
@@ -596,7 +608,7 @@ class DocumentValidator(object):
         jsonschema.validate(doc, self._root, resolver=self._resolver)
 
 
-def pack_json(doc: dict, docs: dict=DOCS_BY_DESC) -> bytes:
+def pack_json(doc: dict, docs: dict = DOCS_BY_DESC) -> bytes:
     """
     Packs the given JSON document into a bytearray using optionally specified documents container.
 
