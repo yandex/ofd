@@ -14,6 +14,8 @@ VERSION = (1, 1, 0, 'ATOL-3')
 
 SIGNATURE = array.array('B', [42, 8, 65, 10]).tostring()
 
+FLK_ERROR = 14  # Ошибка форматно-логического контроля при обработке документа
+
 
 class ProtocolError(RuntimeError):
     pass
