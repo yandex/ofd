@@ -100,7 +100,6 @@
                         "code",
                         "user",
                         "userInn",
-                        "operator",
                         "dateTime",
                         "shiftNumber",
                         "receiptsQuantity",
