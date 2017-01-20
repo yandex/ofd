@@ -17,11 +17,47 @@ class TestVLN(unittest.TestCase):
         actual = ofd.VLN(name='', desc='', maxlen=3).unpack(b'\xe9\x2d\x06')
         self.assertEqual(404969, actual)
 
+    def test_pack_when_max_length_less_8_bytes(self):
+        number = 87892227523633
+        vln = ofd.VLN(name='fiscalSign', desc='фискальный признак', maxlen=6)
+
+        packed = vln.pack(number)
+        assert b'1\x04\x00\x01\xf0O' == packed
+        assert number == vln.unpack(packed)
+
+    def test_pack_when_number_greater_then_max(self):
+        number = 87892227523633222
+        vln = ofd.VLN(name='fiscalSign', desc='фискальный признак', maxlen=6)
+        with self.assertRaises(ValueError):
+            vln.pack(number)
+
 
 class TestFVLN(unittest.TestCase):
     def test_unpack(self):
         actual = ofd.FVLN(name='', desc='', maxlen=5).unpack(b'\x02\x15\xcd\x5b\x07')
         self.assertAlmostEqual(1234567.89, actual, delta=1e-3)
+
+    def test_pack_two_points(self):
+        number = 1234567.89
+        fvln = ofd.FVLN(name='', desc='', maxlen=5)
+        packed = fvln.pack(number)
+        assert b'\x02\x15\xcd\x5b\x07' == packed
+        unpacked = fvln.unpack(packed)
+        assert number == unpacked
+
+    def test_pack_several_points(self):
+        number = 1453.67
+        fvln = ofd.FVLN(name='', desc='', maxlen=8)
+        packed = fvln.pack(number)
+        assert b'\x02\xd77\x02\x00\x00\x00\x00' == packed
+        unpacked = fvln.unpack(packed)
+        assert number == unpacked
+
+    def test_pack_bigger_number_should_raise_error(self):
+        number = 1234567123.893
+        fvln = ofd.FVLN(name='', desc='', maxlen=5)
+        with self.assertRaises(ValueError):
+            fvln.pack(number)
 
 
 class TestString(unittest.TestCase):

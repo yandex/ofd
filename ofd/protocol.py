@@ -136,9 +136,24 @@ class VLN(object):
         self.desc = desc
         self.maxlen = maxlen
 
+    def pack(self, data):
+        packed = struct.pack('<Q', data)
+        # Если длина полученного массива больше maxlen, то у массива будут обрезаны нули справа до maxlen,
+        # т.к. они не влияют на итоговое значение числа
+        if len(packed) > self.maxlen:
+            trim_part = packed[self.maxlen: len(packed)]
+            # Если отбрасываемая часть содержит не только нули, значит переданное число больше чем maxlen и
+            # оно не может быть корректно упаковано
+            if trim_part != b'\x00' * len(trim_part):
+                raise ValueError('VLN cant pack {} because is greater than maximum {}'.format(data, self.maxlen))
+            return packed[:self.maxlen]
+
+        return packed
+
     def unpack(self, data):
         if len(data) > self.maxlen:
-            raise ValueError('VLN actual size is greater than maximum')
+            raise ValueError('VLN for "{}" actual size {} is greater than maximum {}'
+                             .format(self.name, len(data), self.maxlen))
         return struct.unpack('<Q', data + b'\x00' * (8 - len(data)))[0]
 
 
@@ -147,6 +162,27 @@ class FVLN(object):
         self.name = name
         self.desc = desc
         self.maxlen = maxlen
+
+    def pack(self, data):
+        str_data = str(data)
+        point = str_data.index('.')
+        prepared = int(str_data[0:point] + str_data[point + 1:])
+
+        # первый байт, который указывает положение точки в числе относительно правого края
+        point_position = len(str_data) - 1 - point
+        packed = struct.pack('<bQ', point_position, prepared)
+
+        # Если длина полученного массива больше maxlen, то у массива будут обрезаны нули справа до maxlen,
+        # т.к. они не влияют на итоговое значение числа
+        if len(packed) > self.maxlen:
+            trim_part = packed[self.maxlen: len(packed)]
+            # Если отбрасываемая часть содержит не только нули, значит переданное число больше чем maxlen и
+            # оно не может быть корректно упаковано
+            if trim_part != b'\x00' * len(trim_part):
+                raise ValueError('FVLN cant pack {} because is greater than maximum {}'.format(data, self.maxlen))
+            return packed[:self.maxlen]
+
+        return packed
 
     def unpack(self, data):
         if len(data) > self.maxlen:
@@ -622,11 +658,11 @@ def pack_json(doc: dict, docs: dict = DOCS_BY_DESC) -> bytes:
     for name, value in doc.items():
         ty, cls = docs[name]
         if isinstance(value, dict):
-            data = pack_json(value)
+            data = pack_json(value, docs=docs)
         elif isinstance(value, list):
             data = b''
             for item in value:
-                data += pack_json(item)
+                data += pack_json(item, docs=docs)
         else:
             data = cls.pack(value)
 
