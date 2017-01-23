@@ -68,8 +68,6 @@
                 "kktRegId",
                 "fiscalDriveNumber",
                 "totalSum",
-                "cashTotalSum",
-                "ecashTotalSum",
                 "fiscalDocumentNumber",
                 "fiscalSign",
                 "rawData"
