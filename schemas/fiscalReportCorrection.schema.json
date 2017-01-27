@@ -73,7 +73,7 @@
                         },
                         "correctionReasonCode": {
                             "type": "array",
-                            "uniqueItems": false,
+                            "uniqueItems": true,
                             "minItems": 1,
                             "description": "причина перерегистрации",
                             "items": {
