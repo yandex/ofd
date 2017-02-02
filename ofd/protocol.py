@@ -7,7 +7,6 @@ import crcmod
 import crcmod.predefined
 import decimal
 import struct
-
 import jsonschema
 
 VERSION = (1, 1, 0, 'ATOL-3')
