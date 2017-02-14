@@ -349,8 +349,7 @@
         },
         "machineNumber": {
             "type": "string",
-            "minLength": 12,
-            "maxLength": 12,
+            "maxLength": 20,
             "description": "номер автомата"
         },
         "internetSign": {

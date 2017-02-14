@@ -467,7 +467,7 @@ DOCUMENTS = {
     1033: STLV(u'<unknown-1033>', u'Налоги', maxlen=33),
     1034: FVLN(u'markup', u'Наценка (ставка)', maxlen=8),
     1035: VLN(u'markupSum', u'Наценка (сумма)'),
-    1036: String(u'machineNumber', u'Номер автомата', maxlen=12),
+    1036: String(u'machineNumber', u'Номер автомата', maxlen=20),
     1037: String(u'kktRegId', u'Номер ККТ', maxlen=20),
     1038: U32(u'shiftNumber', u'Номер смены'),
     1039: String(u'<unknown-1039>', u'Зарезервирован', maxlen=12),
