@@ -1,4 +1,4 @@
-# coding: utf8
+# CODING: UTF8
 
 import array
 import ofd
