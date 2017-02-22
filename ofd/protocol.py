@@ -418,20 +418,35 @@ class FrameHeader(object):
                                 'Служебные данные 2', self.extra2)
 
 
-DOCUMENT_CODES = {'receipt', 'receiptCorrection', 'bso', 'bsoCorrection'}
+PAYMENT_DOCUMENTS = {'receipt', 'receiptCorrection', 'bso', 'bsoCorrection'}
+
+
+class DocCodes:
+    FISCAL_REPORT = 1
+    FISCAL_REPORT_CORRECTION = 11
+    OPEN_SHIFT = 2
+    CURRENT_STATE_REPORT = 21
+    RECEIPT = 3
+    RECEIPT_CORRECTION = 31
+    BSO = 4
+    BSO_CORRECTION = 41
+    CLOSE_SHIFT = 5
+    CLOSE_ARCHIVE = 6
+    OPERATOR_ACK = 7
+
 
 DOCUMENTS = {
-    1: STLV(u'fiscalReport', u'Отчёт о фискализации', maxlen=658),
-    11: STLV(u'fiscalReportCorrection', u'Отчёт об изменении параметров регистрации', maxlen=658),
-    2: STLV(u'openShift', u'Отчёт об открытии смены', maxlen=440),
-    21: STLV(u'currentStateReport', u'Отчёт о текущем состоянии расчетов', maxlen=32768),
-    3: STLV(u'receipt', u'Кассовый чек', maxlen=32768),
-    31: STLV(u'receiptCorrection', u'Кассовый чек коррекции', maxlen=32768),
-    4: STLV(u'bso', u'Бланк строгой отчетности', maxlen=32768),
-    41: STLV(u'bsoCorrection', u'Бланк строгой отчетности коррекции', maxlen=32768),
-    5: STLV(u'closeShift', u'Отчёт о закрытии смены', maxlen=441),
-    6: STLV(u'closeArchive', u'Отчёт о закрытии фискального накопителя', maxlen=432),
-    7: STLV(u'operatorAck(?)', u'подтверждение оператора', maxlen=512),
+    DocCodes.FISCAL_REPORT: STLV(u'fiscalReport', u'Отчёт о фискализации', maxlen=658),
+    DocCodes.FISCAL_REPORT_CORRECTION: STLV(u'fiscalReportCorrection', u'Отчёт об изменении параметров регистрации', maxlen=658),
+    DocCodes.OPEN_SHIFT: STLV(u'openShift', u'Отчёт об открытии смены', maxlen=440),
+    DocCodes.CURRENT_STATE_REPORT: STLV(u'currentStateReport', u'Отчёт о текущем состоянии расчетов', maxlen=32768),
+    DocCodes.RECEIPT: STLV(u'receipt', u'Кассовый чек', maxlen=32768),
+    DocCodes.RECEIPT_CORRECTION: STLV(u'receiptCorrection', u'Кассовый чек коррекции', maxlen=32768),
+    DocCodes.BSO: STLV(u'bso', u'Бланк строгой отчетности', maxlen=32768),
+    DocCodes.BSO_CORRECTION: STLV(u'bsoCorrection', u'Бланк строгой отчетности коррекции', maxlen=32768),
+    DocCodes.CLOSE_SHIFT: STLV(u'closeShift', u'Отчёт о закрытии смены', maxlen=441),
+    DocCodes.CLOSE_ARCHIVE: STLV(u'closeArchive', u'Отчёт о закрытии фискального накопителя', maxlen=432),
+    DocCodes.OPERATOR_ACK: STLV(u'operatorAck(?)', u'подтверждение оператора', maxlen=512),
 
     1001: Byte(u'autoMode', u'автоматический режим'),
     1002: Byte(u'offlineMode', u'автономный режим'),
