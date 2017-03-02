@@ -4,6 +4,25 @@
         "baseObject": {
             "type": "object",
             "properties": {
+                "fiscalDocumentFormatVer": {
+                    "$ref": "dictionary.schema.json#/definitions/fiscalDocumentFormatVer"
+                },
+                "machineNumber": {
+                    "$ref": "dictionary.schema.json#/definitions/machineNumber"
+                },
+                "prepaidSum": {
+                    "$ref": "dictionary.schema.json#/definitions/prepaidSum"
+                },
+                "creditSum": {
+                    "$ref": "dictionary.schema.json#/definitions/creditSum"
+                },
+                "provisionSum": {
+                    "$ref": "dictionary.schema.json#/definitions/provisionSum"
+                },
+                "propertiesData": {
+                    "$ref": "dictionary.schema.json#/definitions/propertiesData"
+                },
+
                 "user": {
                     "$ref": "dictionary.schema.json#/definitions/user"
                 },
@@ -64,6 +83,9 @@
                 "retailPlaceAddress": {
                     "$ref": "dictionary.schema.json#/definitions/retailPlaceAddress"
                 },
+                "retailPlace": {
+                    "$ref": "dictionary.schema.json#/definitions/retailPlace"
+                },
                 "buyerAddress": {
                     "$ref": "dictionary.schema.json#/definitions/buyerAddress"
                 },
@@ -106,21 +128,6 @@
                 "operatorPhoneToTransfer": {
                     "$ref": "dictionary.schema.json#/definitions/operatorPhoneToTransfer"
                 },
-                "bankAgentPhone": {
-                    "$ref": "dictionary.schema.json#/definitions/bankAgentPhone"
-                },
-                "bankSubagentPhone": {
-                    "$ref": "dictionary.schema.json#/definitions/bankSubagentPhone"
-                },
-                "bankAgentOperation": {
-                    "$ref": "dictionary.schema.json#/definitions/bankAgentOperation"
-                },
-                "bankSubagentOperation": {
-                    "$ref": "dictionary.schema.json#/definitions/bankSubagentOperation"
-                },
-                "bankAgentRemuneration": {
-                    "$ref": "dictionary.schema.json#/definitions/bankAgentRemuneration"
-                },
                 "operatorName": {
                     "$ref": "dictionary.schema.json#/definitions/operatorName"
                 },
@@ -143,8 +150,9 @@
                 }
             },
             "required": [
-                "user",
-                "userInn",
+                "fiscalDocumentFormatVer",
+
+
                 "requestNumber",
                 "dateTime",
                 "shiftNumber",

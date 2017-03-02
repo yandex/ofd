@@ -1,0 +1,239 @@
+{
+    "$schema": "http://json-schema.org/draft-04/schema#",
+    "definitions": {
+        "baseObject": {
+            "type": "object",
+            "properties": {
+                "fiscalDocumentFormatVer": {
+                    "$ref": "dictionary.schema.json#/definitions/fiscalDocumentFormatVer"
+                },
+                "machineNumber": {
+                    "$ref": "dictionary.schema.json#/definitions/machineNumber"
+                },
+                "prepaidSum": {
+                    "$ref": "dictionary.schema.json#/definitions/prepaidSum"
+                },
+                "creditSum": {
+                    "$ref": "dictionary.schema.json#/definitions/creditSum"
+                },
+                "provisionSum": {
+                    "$ref": "dictionary.schema.json#/definitions/provisionSum"
+                },
+                "propertiesData": {
+                    "$ref": "dictionary.schema.json#/definitions/propertiesData"
+                },
+
+                "user": {
+                    "$ref": "dictionary.schema.json#/definitions/user"
+                },
+                "userInn": {
+                    "$ref": "dictionary.schema.json#/definitions/userInn"
+                },
+                "fiscalDriveNumber": {
+                    "$ref": "dictionary.schema.json#/definitions/fiscalDriveNumber"
+                },
+                "operationType": {
+                    "$ref": "dictionary.schema.json#/definitions/operationType"
+                },
+                "cashTotalSum": {
+                    "$ref": "dictionary.schema.json#/definitions/sum"
+                },
+                "totalSum": {
+                    "$ref": "dictionary.schema.json#/definitions/sum"
+                },
+                "ecashTotalSum": {
+                    "$ref": "dictionary.schema.json#/definitions/sum"
+                },
+                "nds18": {
+                    "$ref": "dictionary.schema.json#/definitions/sum"
+                },
+                "nds10": {
+                    "$ref": "dictionary.schema.json#/definitions/sum"
+                },
+                "nds0": {
+                    "$ref": "dictionary.schema.json#/definitions/sum"
+                },
+                "ndsNo": {
+                    "$ref": "dictionary.schema.json#/definitions/sum"
+                },
+                "ndsCalculated18": {
+                    "$ref": "dictionary.schema.json#/definitions/sum"
+                },
+                "ndsCalculated10": {
+                    "$ref": "dictionary.schema.json#/definitions/sum"
+                },
+                "dateTime": {
+                    "$ref": "dictionary.schema.json#/definitions/dateTime"
+                },
+                "taxationType": {
+                    "$ref": "dictionary.schema.json#/definitions/taxationType"
+                },
+                "fiscalSign": {
+                    "$ref": "dictionary.schema.json#/definitions/fiscalSign"
+                },
+                "requestNumber": {
+                    "$ref": "dictionary.schema.json#/definitions/requestNumber"
+                },
+                "operator": {
+                    "$ref": "dictionary.schema.json#/definitions/operator"
+                },
+                "fiscalDocumentNumber": {
+                    "$ref": "dictionary.schema.json#/definitions/fiscalDocumentNumber"
+                },
+                "retailPlaceAddress": {
+                    "$ref": "dictionary.schema.json#/definitions/retailPlaceAddress"
+                },
+                "retailPlace": {
+                    "$ref": "dictionary.schema.json#/definitions/retailPlace"
+                },
+                "buyerAddress": {
+                    "$ref": "dictionary.schema.json#/definitions/buyerAddress"
+                },
+                "senderAddress": {
+                    "$ref": "dictionary.schema.json#/definitions/senderAddress"
+                },
+                "addressToCheckFiscalSign": {
+                    "$ref": "dictionary.schema.json#/definitions/addressToCheckFiscalSign"
+                },
+                "kktRegId": {
+                    "$ref": "dictionary.schema.json#/definitions/kktRegId"
+                },
+                "shiftNumber": {
+                    "$ref": "dictionary.schema.json#/definitions/shiftNumber"
+                },
+                "properties": {
+                    "$ref": "dictionary.schema.json#/definitions/propertiesType"
+                },
+                "message": {
+                    "$ref": "dictionary.schema.json#/definitions/message"
+                },
+                "items": {
+                    "$ref": "dictionary.schema.json#/definitions/receiptItems"
+                },
+                "stornoItems": {
+                    "$ref": "dictionary.schema.json#/definitions/receiptItems"
+                },
+                "paymentAgentRemuneration": {
+                    "$ref": "dictionary.schema.json#/definitions/paymentAgentRemuneration"
+                },
+                "paymentAgentPhone": {
+                    "$ref": "dictionary.schema.json#/definitions/paymentAgentPhone"
+                },
+                "paymentSubagentPhone": {
+                    "$ref": "dictionary.schema.json#/definitions/paymentSubagentPhone"
+                },
+                "operatorPhoneToReceive": {
+                    "$ref": "dictionary.schema.json#/definitions/operatorPhoneToReceive"
+                },
+                "operatorPhoneToTransfer": {
+                    "$ref": "dictionary.schema.json#/definitions/operatorPhoneToTransfer"
+                },
+                "operatorName": {
+                    "$ref": "dictionary.schema.json#/definitions/operatorName"
+                },
+                "operatorAddress": {
+                    "$ref": "dictionary.schema.json#/definitions/operatorAddress"
+                },
+                "operatorInn": {
+                    "$ref": "dictionary.schema.json#/definitions/operatorInn"
+                },
+                "modifiers": {
+                    "type": "array",
+                    "uniqueItems": false,
+                    "description": "скидки/наценки",
+                    "items": {
+                        "$ref": "dictionary.schema.json#/definitions/modifiers"
+                    }
+                },
+                "rawData": {
+                    "$ref": "dictionary.schema.json#/definitions/rawData"
+                }
+            },
+            "required": [
+                "fiscalDocumentFormatVer",
+
+
+                "requestNumber",
+                "dateTime",
+                "shiftNumber",
+                "operationType",
+                "taxationType",
+                "kktRegId",
+                "fiscalDriveNumber",
+                "fiscalDocumentNumber",
+                "totalSum",
+                "fiscalSign",
+                "rawData"
+            ]
+        }
+    },
+    "type": "object",
+    "description": "Документ полученый от ККТ",
+    "properties": {
+        "document": {
+            "type": "object",
+            "description": "Документ",
+            "oneOf": [
+                {
+                    "properties": {
+                        "receipt": {
+                            "description": "Кассовый чек",
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/baseObject"
+                                },
+                                {
+                                    "properties": {
+                                        "receiptCode": {
+                                            "type": "integer",
+                                            "enum": [
+                                                3
+                                            ]
+                                        }
+                                    },
+                                    "required": [
+                                        "receiptCode"
+                                    ]
+                                }
+                            ]
+                        }
+                    },
+                    "required": [
+                        "receipt"
+                    ]
+                },
+                {
+                    "properties": {
+                        "bso": {
+                            "description": "БСО",
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/baseObject"
+                                },
+                                {
+                                    "properties": {
+                                        "bsoCode": {
+                                            "type": "integer",
+                                            "enum": [
+                                                4
+                                            ]
+                                        }
+                                    },
+                                    "required": [
+                                        "bsoCode"
+                                    ]
+                                }
+                            ]
+                        }
+                    },
+                    "required": [
+                        "bso"
+                    ]
+                }
+            ]
+        }
+    },
+    "required": [
+        "document"
+    ]
+}

@@ -7,14 +7,39 @@
             "type": "object",
             "description": "Документ",
             "properties": {
-                "fiscalReportCorrection": {
+                "fiscalReport": {
                     "type": "object",
-                    "description": "Отчет об изменении параметров регистрации",
+                    "description": "Отчет о регистрации",
                     "properties": {
+                        "fiscalDocumentFormatVer": {
+                            "$ref": "dictionary.schema.json#/definitions/fiscalDocumentFormatVer"
+                        },
+                        "printInMachineSign": {
+                            "$ref": "dictionary.schema.json#/definitions/printInMachineSign"
+                        },
+                        "exciseDutyProductSign": {
+                            "$ref": "dictionary.schema.json#/definitions/exciseDutyProductSign"
+                        },
+                        "operatorInn": {
+                            "$ref": "dictionary.schema.json#/definitions/operatorInn"
+                        },
+                        "fnKeyResource": {
+                            "$ref": "dictionary.schema.json#/definitions/fnKeyResource"
+                        },
+                        "kktVersion": {
+                            "$ref": "dictionary.schema.json#/definitions/kktVersion"
+                        },
+                        "documentKktVersion": {
+                             "$ref": "dictionary.schema.json#/definitions/documentKktVersion"
+                        },
+                        "documentFnVersion": {
+                             "$ref": "dictionary.schema.json#/definitions/documentFnVersion"
+                        },
+
                         "code": {
                             "type": "integer",
                             "enum": [
-                                11
+                                1
                             ]
                         },
                         "user": {
@@ -65,22 +90,14 @@
                         "retailPlaceAddress": {
                             "$ref": "dictionary.schema.json#/definitions/retailPlaceAddress"
                         },
+                        "retailPlace": {
+                            "$ref": "dictionary.schema.json#/definitions/retailPlace"
+                        },
                         "ofdInn": {
                             "$ref": "dictionary.schema.json#/definitions/ofdInn"
                         },
                         "kktNumber": {
                             "$ref": "dictionary.schema.json#/definitions/kktNumber"
-                        },
-                        "correctionReasonCode": {
-                            "type": "array",
-                            "uniqueItems": true,
-                            "minItems": 1,
-                            "description": "причина перерегистрации",
-                            "items": {
-                                "type": "integer",
-                                "minimum": 0,
-                                "maximum": 255
-                            }
                         },
                         "fiscalSign": {
                             "$ref": "dictionary.schema.json#/definitions/fiscalSign"
@@ -93,6 +110,12 @@
                         }
                     },
                     "required": [
+                        "fiscalDocumentFormatVer",
+                        "printInMachineSign",
+                        "kktVersion",
+                        "documentKktVersion",
+                        "kktNumber",
+
                         "code",
                         "user",
                         "userInn",
@@ -108,16 +131,15 @@
                         "fiscalDocumentNumber",
                         "fiscalDriveNumber",
                         "operator",
-                        "retailPlaceAddress",
+                        "retailPlace",
                         "ofdInn",
-                        "correctionReasonCode",
                         "fiscalSign",
                         "rawData"
                     ]
                 }
             },
             "required": [
-                "fiscalReportCorrection"
+                "fiscalReport"
             ]
         }
     },

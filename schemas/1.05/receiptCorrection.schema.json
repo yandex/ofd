@@ -1,0 +1,198 @@
+{
+    "$schema": "http://json-schema.org/draft-04/schema#",
+    "definitions": {
+        "baseObject": {
+            "type": "object",
+            "properties": {
+                "fiscalDocumentFormatVer": {
+                    "$ref": "dictionary.schema.json#/definitions/fiscalDocumentFormatVer"
+                },
+                "machineNumber": {
+                    "$ref": "dictionary.schema.json#/definitions/machineNumber"
+                },
+                "prepaidSum": {
+                    "$ref": "dictionary.schema.json#/definitions/prepaidSum"
+                },
+                "creditSum": {
+                    "$ref": "dictionary.schema.json#/definitions/creditSum"
+                },
+                "provisionSum": {
+                    "$ref": "dictionary.schema.json#/definitions/provisionSum"
+                },
+                "retailPlace": {
+                    "$ref": "dictionary.schema.json#/definitions/retailPlace"
+                },
+                "correctionType": {
+                    "type": "integer",
+                    "enum": [0,1],
+                    "description": "тип коррекции"
+                },
+                "correctionBase": {
+                    "type": "object",
+                    "description": "основание для коррекции",
+                    "properties": {
+                        "correctionName": {
+                            "type": "string",
+                            "maxLength": 256,
+                            "description": "наименование основания для коррекции'"
+                        },
+                        "correctionDocumentDate": {
+                            "type": "integer",
+                            "minimum": 0,
+                            "maximum": 4294967295,
+                            "description": "дата документа основания для коррекции"
+                        },
+                        "correctionDocumentNumber": {
+                            "type": "string",
+                            "maxLength": 32,
+                            "description": "номер документа для основания коррекции"
+                        }
+                    },
+                    "required": ["correctionName", "correctionDocumentDate", "correctionDocumentNumber"]
+                },
+
+                "user": {
+                    "$ref": "dictionary.schema.json#/definitions/user"
+                },
+                "userInn": {
+                    "$ref": "dictionary.schema.json#/definitions/userInn"
+                },
+                "requestNumber": {
+                    "$ref": "dictionary.schema.json#/definitions/requestNumber"
+                },
+                "dateTime": {
+                    "$ref": "dictionary.schema.json#/definitions/dateTime"
+                },
+                "shiftNumber": {
+                    "$ref": "dictionary.schema.json#/definitions/shiftNumber"
+                },
+                "operationType": {
+                    "$ref": "dictionary.schema.json#/definitions/operationType"
+                },
+                "taxationType": {
+                    "$ref": "dictionary.schema.json#/definitions/taxationType"
+                },
+                "operator": {
+                    "$ref": "dictionary.schema.json#/definitions/operator"
+                },
+                "kktRegId": {
+                    "$ref": "dictionary.schema.json#/definitions/kktRegId"
+                },
+                "fiscalDriveNumber": {
+                    "$ref": "dictionary.schema.json#/definitions/fiscalDriveNumber"
+                },
+                "totalSum": {
+                    "$ref": "dictionary.schema.json#/definitions/sum"
+                },
+                "cashTotalSum": {
+                    "$ref": "dictionary.schema.json#/definitions/sum"
+                },
+                "ecashTotalSum": {
+                    "$ref": "dictionary.schema.json#/definitions/sum"
+                },
+                "fiscalDocumentNumber": {
+                    "$ref": "dictionary.schema.json#/definitions/fiscalDocumentNumber"
+                },
+                "fiscalSign": {
+                    "$ref": "dictionary.schema.json#/definitions/fiscalSign"
+                },
+                "properties": {
+                    "$ref": "dictionary.schema.json#/definitions/propertiesType"
+                },
+                "rawData": {
+                    "$ref": "dictionary.schema.json#/definitions/rawData"
+                }
+            },
+            "required": [
+                "fiscalDocumentFormatVer",
+                "retailPlace",
+                "correctionType",
+                "correctionBase",
+
+                "user",
+                "userInn",
+                "requestNumber",
+                "dateTime",
+                "shiftNumber",
+                "operationType",
+                "taxationType",
+                "operator",
+                "kktRegId",
+                "fiscalDriveNumber",
+                "totalSum",
+                "fiscalDocumentNumber",
+                "fiscalSign",
+                "rawData"
+            ]
+        }
+    },
+    "type": "object",
+    "description": "Документ полученый от ККТ",
+    "properties": {
+        "document": {
+            "type": "object",
+            "description": "Документ",
+            "oneOf": [
+                {
+                    "properties": {
+                        "receiptCorrection": {
+                            "description": "Кассовый чек коррекции",
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/baseObject"
+                                },
+                                {
+                                    "properties": {
+                                        "receiptCorrectionCode": {
+                                            "type": "integer",
+                                            "enum": [
+                                                31
+                                            ]
+                                        }
+                                    },
+                                    "required": [
+                                        "receiptCorrectionCode"
+                                    ]
+                                }
+                            ]
+                        }
+                    },
+                    "required": [
+                        "receiptCorrection"
+                    ]
+                },
+                {
+                    "properties": {
+                        "bsoCorrection": {
+                            "description": "Бланк строгой отчетности коррекции",
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/baseObject"
+                                },
+                                {
+                                    "properties": {
+                                        "bsoCorrectionCode": {
+                                            "type": "integer",
+                                            "enum": [
+                                                41
+                                            ]
+                                        }
+                                    },
+                                    "required": [
+                                        "bsoCorrectionCode"
+                                    ]
+                                }
+                            ]
+                        }
+                    },
+                    "required": [
+                        "bsoCorrection"
+                    ]
+                }
+            ]
+        }
+    },
+    "required": [
+        "document"
+    ]
+}

@@ -1,0 +1,116 @@
+{
+    "$schema": "http://json-schema.org/draft-04/schema#",
+    "type": "object",
+    "description": "Документ полученый от ККТ",
+    "properties": {
+        "document": {
+            "type": "object",
+            "description": "Документ",
+            "properties": {
+                "openShift": {
+                    "type": "object",
+                    "description": "Отчет об открытии смены",
+                    "properties": {
+                        "fiscalDocumentFormatVer": {
+                            "$ref": "dictionary.schema.json#/definitions/fiscalDocumentFormatVer"
+                        },
+                        "operatorInn": {
+                            "$ref": "dictionary.schema.json#/definitions/operatorInn"
+                        },
+                        "operatorMessage": {
+                            "$ref": "dictionary.schema.json#/definitions/operatorMessage"
+                        },
+                        "ofdResponseTimeoutSign": {
+                            "$ref": "dictionary.schema.json#/definitions/ofdResponseTimeoutSign"
+                        },
+                        "fiscalDriveReplaceRequiredSign": {
+                            "$ref": "dictionary.schema.json#/definitions/fiscalDriveReplaceRequiredSign"
+                        },
+                        "fiscalDriveMemoryExceededSign": {
+                            "$ref": "dictionary.schema.json#/definitions/fiscalDriveMemoryExceededSign"
+                        },
+                        "fiscalDriveExhaustionSign": {
+                            "$ref": "dictionary.schema.json#/definitions/fiscalDriveExhaustionSign"
+                        },
+                        "kktVersion": {
+                            "$ref": "dictionary.schema.json#/definitions/kktVersion"
+                        },
+                        "documentKktVersion": {
+                             "$ref": "dictionary.schema.json#/definitions/documentKktVersion"
+                        },
+                        "code": {
+                            "type": "integer",
+                            "enum": [
+                                2
+                            ]
+                        },
+                        "user": {
+                            "$ref": "dictionary.schema.json#/definitions/user"
+                        },
+                        "userInn": {
+                            "$ref": "dictionary.schema.json#/definitions/userInn"
+                        },
+                        "operator": {
+                            "$ref": "dictionary.schema.json#/definitions/operator"
+                        },
+                        "retailPlaceAddress": {
+                            "$ref": "dictionary.schema.json#/definitions/retailPlaceAddress"
+                        },
+                        "retailPlace": {
+                            "$ref": "dictionary.schema.json#/definitions/retailPlace"
+                        },
+                        "dateTime": {
+                            "$ref": "dictionary.schema.json#/definitions/dateTime"
+                        },
+                        "shiftNumber": {
+                            "$ref": "dictionary.schema.json#/definitions/shiftNumber"
+                        },
+                        "kktRegId": {
+                            "$ref": "dictionary.schema.json#/definitions/kktRegId"
+                        },
+                        "fiscalDriveNumber": {
+                            "$ref": "dictionary.schema.json#/definitions/fiscalDriveNumber"
+                        },
+                        "fiscalDocumentNumber": {
+                            "$ref": "dictionary.schema.json#/definitions/fiscalDocumentNumber"
+                        },
+                        "fiscalSign": {
+                            "$ref": "dictionary.schema.json#/definitions/fiscalSign"
+                        },
+                        "message": {
+                            "$ref": "dictionary.schema.json#/definitions/message"
+                        },
+                        "properties": {
+                            "$ref": "dictionary.schema.json#/definitions/propertiesType"
+                        },
+                        "rawData": {
+                            "$ref": "dictionary.schema.json#/definitions/rawData"
+                        }
+                    },
+                    "required": [
+                        "fiscalDocumentFormatVer",
+                        "retailPlace",
+                        "retailPlaceAddress",
+
+                        "code",
+                        "user",
+                        "userInn",
+                        "dateTime",
+                        "shiftNumber",
+                        "kktRegId",
+                        "fiscalDriveNumber",
+                        "fiscalDocumentNumber",
+                        "fiscalSign",
+                        "rawData"
+                    ]
+                }
+            },
+            "required": [
+                "openShift"
+            ]
+        }
+    },
+    "required": [
+        "document"
+    ]
+}

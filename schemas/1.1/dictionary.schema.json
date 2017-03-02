@@ -1,0 +1,713 @@
+{
+    "$schema": "http://json-schema.org/draft-04/schema#",
+    "type": "object",
+    "definitions": {
+        "shiftNumber": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 4294967295,
+            "description": "номер смены"
+        },
+        "message": {
+            "type": "array",
+            "uniqueItems": false,
+            "description": "сообщение оператору",
+            "items": {
+                "type": "object",
+                "properties": {
+                    "type": {
+                        "type": "string",
+                        "minLength": 1,
+                        "maxLength": 64
+                    },
+                    "message": {
+                        "type": "string",
+                        "maxLength": 256
+                    }
+                },
+                "required": [
+                    "type",
+                    "message"
+                ]
+            }
+        },
+        "propertiesType": {
+            "type": "array",
+            "uniqueItems": false,
+            "description": "сообщение оператору",
+            "items": {
+                "type": "object",
+                "properties": {
+                    "key": {
+                        "type": "string",
+                        "minLength": 1,
+                        "maxLength": 64
+                    },
+                    "value": {
+                        "type": "string",
+                        "maxLength": 256
+                    }
+                },
+                "required": []
+            }
+        },
+        "fiscalDriveNumber": {
+            "type": "string",
+            "minLength": 16,
+            "maxLength": 16,
+            "description": "заводской номер фискального накопителя"
+        },
+        "kktRegId": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 20,
+            "description": "регистрационный номер ККТ"
+        },
+        "sum": {
+            "type": "integer",
+            "minimum": 0,
+            "description": "общая стоимость с учетом скидок и наценок, в копейках"
+        },
+        "modifiers": {
+            "type": "object",
+            "description": "скидка/наценка",
+            "properties": {
+                "discountName": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 64,
+                    "description": "наименование скидкм"
+                },
+                "markupName": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 64,
+                    "description": "наименование наценки"
+                },
+                "discount": {
+                    "type": "number",
+                    "minimum": 0,
+                    "description": "скидка (ставка) %"
+                },
+                "discountSum": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "description": "скидка (сумма), в копейках"
+                },
+                "markup": {
+                    "type": "number",
+                    "minimum": 0,
+                    "description": "наценка (ставка) %"
+                },
+                "markupSum": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "description": "наценка (сумма), в копейках"
+                }
+            }
+        },
+        "user": {
+            "type": "string",
+            "minLength": 0,
+            "maxLength": 256,
+            "description": "наименование пользователя"
+        },
+        "userInn": {
+            "type": "string",
+            "pattern": "^([0-9][1-9]|[1-9][0-9])(([0-9]{8} {2})|([0-9]{10}))$",
+            "description": "ИНН пользователя"
+        },
+        "operationType": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 4,
+            "description": "признак расчета"
+        },
+        "buyerAddress": {
+            "type": "string",
+            "minLength": 0,
+            "maxLength": 64,
+            "description": "адрес покупателя"
+        },
+        "dateTime": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 4294967295,
+            "description": "дата, время совершения транзакции"
+        },
+        "taxationsType": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 256,
+            "description": "системы налогообложения"
+        },
+        "taxationType": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 256,
+            "description": "применяемая система налогообложения"
+        },
+        "fiscalSign": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 281474976710655,
+            "description": "фискальный признак документа"
+        },
+        "requestNumber": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 4294967295,
+            "description": "номер чека за смену"
+        },
+        "operator": {
+            "type": "string",
+            "minLength": 0,
+            "maxLength": 256,
+            "description": "кассир"
+        },
+        "fiscalDocumentNumber": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 4294967295,
+            "description": "порядковый номер фискального документа"
+        },
+        "receiptItems": {
+            "type": "array",
+            "uniqueItems": false,
+            "description": "реквизиты товаров",
+            "items": {
+                "type": "object",
+                "properties": {
+                    "paymentType": {
+                        "type": "integer",
+                        "minimum": 1,
+                        "maximum": 7,
+                        "description": "признак способа расчета"
+                    },
+                    "productType": {
+                        "type": "integer",
+                        "minimum": 1,
+                        "maximum": 11,
+                        "description": "признак предмета расчета"
+                    },
+                    "ndsSum": {
+                        "type": "integer",
+                        "minimum": 0,
+                        "description": "сумма НДС за предмет расчета"
+                    },
+                    "propertiesString": {
+                        "type": "string",
+                        "maxLength": 16,
+                        "description": "дополнительный реквизит предмета расчета"
+                    },
+
+
+                    "name": {
+                        "type": "string",
+                        "minLength": 1,
+                        "maxLength": 64,
+                        "description": "наименование товара"
+                    },
+                    "barcode": {
+                        "type": "string",
+                        "minLength": 0,
+                        "maxLength": 16,
+                        "description": "штриховой код EAN13"
+                    },
+                    "quantity": {
+                        "type": "number",
+                        "minimum": 0,
+                        "description": "количество"
+                    },
+                    "price": {
+                        "type": "integer",
+                        "minimum": 0,
+                        "description": "цена за единицу"
+                    },
+                    "modifiers": {
+                        "type": "array",
+                        "uniqueItems": false,
+                        "description": "скидки/наценки",
+                        "items": {
+                            "$ref": "#/definitions/modifiers"
+                        }
+                    },
+                    "ndsCalculated18": {
+                        "$ref": "#/definitions/sum"
+                    },
+                    "ndsCalculated10": {
+                        "$ref": "#/definitions/sum"
+                    },
+                    "sum": {
+                        "type": "integer",
+                        "minimum": 0,
+                        "description": "общая стоимость позиции с учетом скидок и наценок, в копейках"
+                    },
+                    "properties": {
+                        "$ref": "#/definitions/propertiesType"
+                    }
+                },
+                "required": [
+                    "name",
+                    "quantity",
+                    "sum"
+                ]
+            }
+        },
+        "senderAddress": {
+            "type": "string",
+            "minLength": 0,
+            "maxLength": 64,
+            "description": "адрес отправителя"
+        },
+        "addressToCheckFiscalSign": {
+            "type": "string",
+            "minLength": 0,
+            "maxLength": 256,
+            "description": "адрес сайта для проверки ФП"
+        },
+        "paymentAgentRemuneration": {
+            "type": "number",
+            "minimum": 0,
+            "description": "размер вознаграждения платежного агента (субагента)"
+        },
+        "paymentAgentPhone": {
+            "type": "string",
+            "minLength": 0,
+            "maxLength": 19,
+            "description": "телефон платежного агента"
+        },
+        "paymentSubagentPhone": {
+            "type": "string",
+            "minLength": 0,
+            "maxLength": 19,
+            "description": "телефон платежного субагента"
+        },
+        "operatorPhoneToReceive": {
+            "type": "string",
+            "minLength": 0,
+            "maxLength": 19,
+            "description": "телефон оператора по приему платежей"
+        },
+        "operatorPhoneToTransfer": {
+            "type": "string",
+            "minLength": 0,
+            "maxLength": 19,
+            "description": "телефон оператора по переводу денежных средств"
+        },
+        "bankAgentPhone": {
+            "type": "string",
+            "minLength": 0,
+            "maxLength": 19,
+            "description": "телефон банковского агента"
+        },
+        "bankSubagentPhone": {
+            "type": "string",
+            "minLength": 0,
+            "maxLength": 19,
+            "description": "телефон банковского субагента"
+        },
+        "bankAgentOperation": {
+            "type": "string",
+            "minLength": 0,
+            "maxLength": 24,
+            "description": "операция банковского агента"
+        },
+        "bankSubagentOperation": {
+            "type": "string",
+            "minLength": 0,
+            "maxLength": 24,
+            "description": "операция банковского субагента"
+        },
+        "bankAgentRemuneration": {
+            "type": "number",
+            "minimum": 0,
+            "description": "размер вознаграждения банковского агента (субагента)"
+        },
+        "operatorName": {
+            "type": "string",
+            "minLength": 0,
+            "maxLength": 64,
+            "description": "наименование оператора по переводу денежных средств"
+        },
+        "operatorAddress": {
+            "type": "string",
+            "minLength": 0,
+            "maxLength": 256,
+            "description": "адрес оператора по переводу денежных средств"
+        },
+        "operatorInn": {
+            "type": "string",
+            "pattern": "^([0-9][1-9]|[1-9][0-9])(([0-9]{8} {2})|([0-9]{10}))$",
+            "description": "ИНН кассира или ИНН оператора по переводу денежных средств"
+        },
+        "offlineMode": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 255,
+            "description": "автономный режим"
+        },
+        "bsoSign": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 255,
+            "description": "признак БСО"
+        },
+        "serviceSign": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 255,
+            "description": "признак услуги"
+        },
+        "encryptionSign": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 255,
+            "description": "признак шифрования"
+        },
+        "autoMode": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 255,
+            "description": "автоматический режим"
+        },
+        "machineNumber": {
+            "type": "string",
+            "maxLength": 20,
+            "description": "номер автомата"
+        },
+        "internetSign": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 255,
+            "description": "признак рассчетов в Интернете"
+        },
+        "retailPlaceAddress": {
+            "type": "string",
+            "maxLength": 256,
+            "description": "адрес (место) рассчетов"
+        },
+        "retailPlace": {
+            "type": "string",
+            "maxLength": 256,
+            "description": "место рассчетов"
+        },
+        "ofdInn": {
+            "type": "string",
+            "pattern": "^([0-9][1-9]|[1-9][0-9])(([0-9]{8} {2})|([0-9]{10}))$",
+            "description": "ОФД ИНН"
+        },
+        "kktNumber": {
+            "type": "string",
+            "maxLength": 20,
+            "description": "заводской номер ККТ"
+        },
+        "rawData": {
+            "type": "string",
+            "minLength": 1,
+            "description": "бинарное представление документа в формате протокола ККТ с ФП2"
+        },
+        "notTransmittedDocumentsQuantity": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 4294967295,
+            "description": "кол-во неподтвержденных документов ФД"
+        },
+        "notTransmittedDocumentsDateTime": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 4294967295,
+            "description": "дата и время первого из непереданных ФД"
+        },
+        "fiscalDocumentFormatVer":{
+            "type": "integer",
+            "enum": [2,3],
+            "description": "версия ФФД"
+        },
+        "printInMachineSign": {
+            "type": "integer",
+            "enum": [0,1],
+            "description": "признак установки принтера в автомате"
+        },
+        "exciseDutyProductSign": {
+            "type": "integer",
+            "enum": [0,1],
+            "description": "продажа подакцизного товара"
+        },
+        "fnKeyResource": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 4294967295,
+            "description": "ресурс ключей ФП"
+        },
+        "sumInReports": {
+            "type": "object",
+            "properties": {
+                "cashSum": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "description": "итоговая сумма в чеках (БСО) наличными"
+                },
+                "ecashSum": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "description": "итоговая сумма в чеках (БСО) электронными"
+                },
+                "prepaidSum": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "description": "итоговая сумма предоплатами"
+                },
+                "creditSum": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "description": "итоговая сумма постоплатами"
+                },
+                "provisionSum": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "description": "итоговая сумма в чеках (БСО) встречными предоставлениями"
+                },
+                "totalSum": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "description": "общая сумма расчетов"
+                }
+            }
+        },
+        "operationReports": {
+            "allOf": [
+                {"$ref": "#/definitions/sumInReports"},
+                {"properties": {
+                    "receiptCount": {
+                        "type": "integer",
+                        "minimum": 0,
+                        "description": "количество чеков по признаку расчета"
+                    },
+                    "tax18Sum": {
+                        "type": "integer",
+                        "minimum": 0,
+                        "description": "сумма НДС по ставке 18%"
+                    },
+                    "tax10Sum": {
+                        "type": "integer",
+                        "minimum": 0,
+                        "description": "сумма НДС по ставке 10%"
+                    },
+                    "tax18118Sum": {
+                        "type": "integer",
+                        "minimum": 0,
+                        "description": "сумма НДС по расч. ставке 18/118"
+                    },
+                    "tax10110Sum": {
+                        "type": "integer",
+                        "minimum": 0,
+                        "description": "сумма НДС по расч. ставке 10/110"
+                    },
+                    "tax0Sum": {
+                        "type": "integer",
+                        "minimum": 0,
+                        "description": "сумма расчетов с НДС по ставке 0%"
+                    },
+                    "taxFreeSum": {
+                        "type": "integer",
+                        "minimum": 0,
+                        "description": "сумма расчетов бех НДС"
+                    }
+                },
+                 "required": [
+                     "cashSum",
+                     "ecashSum",
+                     "prepaidSum",
+                     "creditSum",
+                     "provisionSum",
+                     "totalSum",
+
+                     "receiptCount",
+                     "tax18Sum",
+                     "tax10Sum",
+                     "tax18118Sum",
+                     "tax10110Sum",
+                     "tax0Sum",
+                     "taxFreeSum"
+                ]
+            }]
+        },
+        "correctionReports": {
+            "allOf": [
+                {"$ref": "#/definitions/sumInReports"},
+                {"properties": {
+                    "selfCorrectionCount": {
+                        "type": "integer",
+                        "minimum": 0,
+                        "description": "количество самостоятельных корректировок"
+                    },
+                    "orderCorrectionCount": {
+                        "type": "integer",
+                        "minimum": 0,
+                        "description": "количество корректировок по предписанию"
+                    },
+                    "tax18CorrectionSum": {
+                        "type": "integer",
+                        "minimum": 0,
+                        "description": "сумма коррекции НДС по ставке 18%"
+                    },
+                    "tax10CorrectionSum": {
+                        "type": "integer",
+                        "minimum": 0,
+                        "description": "сумма коррекции НДС по ставке 10%"
+                    },
+                    "tax18118CorrectionSum": {
+                        "type": "integer",
+                        "minimum": 0,
+                        "description": "сумма коррекции НДС по расч. ставке 18/118"
+                    },
+                    "tax10110CorrectionSum": {
+                        "type": "integer",
+                        "minimum": 0,
+                        "description": "сумма коррекции НДС по расч. ставке 10/110"
+                    },
+                    "tax08CorrectionSum": {
+                        "type": "integer",
+                        "minimum": 0,
+                        "description": "сумма коррекции расчетов с НДС по ставке 0%"
+                    },
+                    "taxFreeCorrectionSum": {
+                        "type": "integer",
+                        "minimum": 0,
+                        "description": "сумма коррекции расчетов без НДС"
+                    }
+                },
+                "required": [
+                     "cashSum",
+                     "ecashSum",
+                     "prepaidSum",
+                     "creditSum",
+                     "provisionSum",
+                     "totalSum",
+
+                     "selfCorrectionCount",
+                     "orderCorrectionCount",
+                     "tax18CorrectionSum",
+                     "tax10CorrectionSum",
+                     "tax18118CorrectionSum",
+                     "tax10110CorrectionSum",
+                     "tax0CorrectionSum",
+                     "taxFreeCorrectionSum"
+                ]
+
+            }]
+        },
+        "fiscalDriveSumReports": {
+            "type": "object",
+            "description": "счетчики ФН",
+            "properties": {
+                "receiptCount": {
+                    "type": "integer",
+                    "minimum": 0
+                },
+                "sellOper": {
+                    "$ref": "#/definitions/operationReports"
+                },
+                "sellReturnOper": {
+                    "$ref": "#/definitions/operationReports"
+                },
+                "buyOper": {
+                    "$ref": "#/definitions/operationReports"
+                },
+                "buyReturnOper": {
+                    "$ref": "#/definitions/operationReports"
+                },
+                "receiptCorrection": {
+                    "type": "object",
+                    "definition": "счетчики операций по чекам коррекции",
+                    "properties": {
+                        "receiptCorrectionCount": {
+                            "type": "integer",
+                            "minimum": 0,
+                            "maximum": 4294967295,
+                            "definition": "количество чеков коррекции"
+                        },
+                        "sellCorrection": {
+                            "$ref": "#/definitions/correctionReports"
+                        },
+                        "buyCorrection": {
+                            "$ref": "#/definitions/correctionReports"
+                        }
+                    },
+                    "required": ["receiptCorrectionCount", "sellCorrection", "buyCorrection"]
+                }
+            },
+            "required": [
+                "receiptCount",
+                "sellOper",
+                "sellReturnOper",
+                "buyOper",
+                "buyReturnOper",
+                "receiptCorrection"
+            ]
+        },
+        "operatorMessage": {
+            "type": "integer",
+            "minimal": 0
+        },
+        "ofdResponseTimeoutSign": {
+            "type": "integer",
+            "enum": [1],
+            "description": "Признак превышения времени ожидания ответа ОФД"
+        },
+        "fiscalDriveReplaceRequiredSign": {
+            "type": "integer",
+            "enum": [1],
+            "description": "Признак необходимости срочной замены ФН"
+        },
+        "fiscalDriveMemoryExceededSign": {
+            "type": "integer",
+            "enum": [1],
+            "description": "Признак переполнения памяти ФН"
+        },
+        "fiscalDriveExhaustionSign": {
+            "type": "integer",
+            "enum": [1],
+            "description": "Признак исчерпания ресурса ФН"
+        },
+        "kktVersion": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 8,
+            "description": "версия ККТ'"
+        },
+        "documentKktVersion": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 7,
+            "description": "версия ФФД ККТ"
+        },
+        "documentFnVersion": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 7,
+            "description": "версия ФФД ФН"
+        },
+        "prepaidSum": {
+            "type": "integer",
+            "minimum": 0,
+            "description": "сумма предоплаты (зачет аванса)"
+        },
+        "creditSum": {
+            "type": "integer",
+            "minimum": 0,
+            "description": "сумма постоплаты (кредита)"
+        },
+        "provisionSum": {
+            "type": "integer",
+            "minimum": 0,
+            "description": "сумма встречным предоставлением"
+        },
+        "propertiesData": {
+            "type": "string",
+            "maxLength": 16,
+            "description": "дополнительный реквизит чека (БСО)"
+        }
+    }
+}

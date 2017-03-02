@@ -1,0 +1,91 @@
+{
+    "$schema": "http://json-schema.org/draft-04/schema#",
+    "type": "object",
+    "description": "Документ полученый от ККТ",
+    "properties": {
+        "document": {
+            "type": "object",
+            "description": "Документ",
+            "properties": {
+                "closeArchive": {
+                    "type": "object",
+                    "description": "Отчет о закрытии фискального накопителя",
+                    "properties": {
+                        "fiscalDocumentFormatVer": {
+                            "$ref": "dictionary.schema.json#/definitions/fiscalDocumentFormatVer"
+                        },
+                        "retailPlace": {
+                            "$ref": "dictionary.schema.json#/definitions/retailPlace"
+                        },
+                        "retailPlaceAddress": {
+                            "$ref": "dictionary.schema.json#/definitions/retailPlaceAddress"
+                        },
+                        "operatorInn": {
+                            "$ref": "dictionary.schema.json#/definitions/operatorInn"
+                        },
+                        "fiscalDriveSumReports": {
+                            "$ref": "dictionary.schema.json#/definitions/fiscalDriveSumReports"
+                        },
+                        "shiftNumber": {
+                            "$ref": "dictionary.schema.json#/definitions/shiftNumber"
+                        },
+
+                        "code": {
+                            "type": "integer",
+                            "enum": [
+                                6
+                            ]
+                        },
+                        "userInn": {
+                            "$ref": "dictionary.schema.json#/definitions/userInn"
+                        },
+                        "operator": {
+                            "$ref": "dictionary.schema.json#/definitions/operator"
+                        },
+                        "dateTime": {
+                            "$ref": "dictionary.schema.json#/definitions/dateTime"
+                        },
+                        "kktRegId": {
+                            "$ref": "dictionary.schema.json#/definitions/kktRegId"
+                        },
+                        "fiscalDriveNumber": {
+                            "$ref": "dictionary.schema.json#/definitions/fiscalDriveNumber"
+                        },
+                        "fiscalDocumentNumber": {
+                            "$ref": "dictionary.schema.json#/definitions/fiscalDocumentNumber"
+                        },
+                        "fiscalSign": {
+                            "$ref": "dictionary.schema.json#/definitions/fiscalSign"
+                        },
+                        "properties": {
+                            "$ref": "dictionary.schema.json#/definitions/propertiesType"
+                        },
+                        "rawData": {
+                            "$ref": "dictionary.schema.json#/definitions/rawData"
+                        }
+                    },
+                    "required": [
+                        "fiscalDocumentFormatVer",
+                        "user",
+                        "retailPlace",
+                        "code",
+                        "userInn",
+                        "operator",
+                        "dateTime",
+                        "kktRegId",
+                        "fiscalDriveNumber",
+                        "fiscalDocumentNumber",
+                        "fiscalSign",
+                        "rawData"
+                    ]
+                }
+            },
+            "required": [
+                "closeArchive"
+            ]
+        }
+    },
+    "required": [
+        "document"
+    ]
+}

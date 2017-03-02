@@ -8,6 +8,7 @@ import crcmod.predefined
 import decimal
 import struct
 import jsonschema
+from jsonschema import ValidationError
 
 
 VERSION = (1, 1, 0, 'ATOL-3')
@@ -435,6 +436,7 @@ class DocCodes:
     OPERATOR_ACK = 7
 
 
+# англоязычные name могут повторяться в тегах, русскоязычный description - уникальный для каждого тега
 DOCUMENTS = {
     DocCodes.FISCAL_REPORT: STLV(u'fiscalReport', u'Отчёт о фискализации', maxlen=658),
     DocCodes.FISCAL_REPORT_CORRECTION: STLV(u'fiscalReportCorrection', u'Отчёт об изменении параметров регистрации', maxlen=658),
@@ -493,7 +495,7 @@ DOCUMENTS = {
     1043: VLN(u'sum', u'Общая стоимость позиции с учетом скидок и наценок'),
     1044: String(u'bankAgentOperation', u'Операция банковского агента', maxlen=24),
     1045: String(u'bankSubagentOperation', u'операция банковского субагента', maxlen=24),
-    1046: String(u'<unknown-1046>', u'ОФД', maxlen=64),
+    1046: String(u'ofdName', u'ОФД', maxlen=64),
     1047: STLV(u'<unknown-1047>', u'параметр настройки', maxlen=144),
     1048: String(u'user', u'наименование пользователя', maxlen=256),
     1049: String(u'<unknown-1049>', u'Почтовый индекс', maxlen=6),
@@ -504,7 +506,7 @@ DOCUMENTS = {
     1054: Byte(u'operationType', u'Признак расчета'),
     1055: Byte(u'taxationType', u'применяемая система налогообложения'),
     1056: Byte(u'encryptionSign', u'Признак шифрования'),
-    1057: Byte(u'<unknown-1057>', u'Применение платежными агентами (субагентами)'),
+    1057: Byte(u'paymentAgentType', u'Применение платежными агентами (субагентами)'),
     1058: Byte(u'<unknown-1058>', u'Применение банковскими агентами (субагентами)'),
     1059: STLV(u'items', u'наименование товара (реквизиты)', 328, '*'),
     1060: String(u'<unknown-1060>', u'Сайт налогового органа', maxlen=64),
@@ -573,92 +575,126 @@ DOCUMENTS = {
     # 1123:
     # 1124:
     # 1125:
-    1126: Byte(u'1126', u'признак проведения лотереи'),
-    1129: STLV(u'1129', u'счетчики операций "приход"', 116),
-    1130: STLV(u'1130', u'счетчики операций "возврат прихода"', 116),
-    1131: STLV(u'1131', u'счетчики операций "расход"', 116),
-    1132: STLV(u'1132', u'счетчики операций "возврат расхода"', 116),
-    1133: STLV(u'1133', u'счетчики операций по чекам коррекции', 216),
-    1134: U32(u'1134', u'количество чеков со всеми признаками расчетов'),
-    1135: U32(u'1135', u'количество чеков по признаку расчетов'),
-    1136: VLN(u'1136', u'сумма расчетов наличными'),
-    1138: VLN(u'1138', u'сумма расчетов электронными'),
-    1139: VLN(u'1139', u'сумма НДС по ставке 18%'),
-    1140: VLN(u'1140', u'сумма НДС по ставке 10%'),
-    1141: VLN(u'1141', u'сумма НДС по расч. ставке 18/118'),
-    1142: VLN(u'1142', u'сумма НДС по расч. ставке 10/110'),
-    1143: VLN(u'1143', u'сумма расчетов с НДС по ставке 0%'),
-    1144: U32(u'1144', u'количество чеков коррекции'),
-    1145: STLV(u'1145', u'счетчики коррекций "приход"', 100),
-    1146: STLV(u'1146', u'счетчики коррекций "расход"', 100),
+    1126: Byte(u'loterySign', u'признак проведения лотереи'),
+    1129: STLV(u'sellOper', u'счетчики операций "приход"', 116),
+    1130: STLV(u'sellReturnOper', u'счетчики операций "возврат прихода"', 116),
+    1131: STLV(u'buyOper', u'счетчики операций "расход"', 116),
+    1132: STLV(u'buyReturnOper', u'счетчики операций "возврат расхода"', 116),
+    1133: STLV(u'receiptCorrection', u'счетчики операций по чекам коррекции', 216),
+    1134: U32(u'receiptCount', u'количество чеков со всеми признаками расчетов'),
+    1135: U32(u'receiptCount', u'количество чеков по признаку расчетов'),
+    1136: VLN(u'cashSum', u'сумма расчетов наличными'),
+    1138: VLN(u'ecashSum', u'сумма расчетов электронными'),
+    1139: VLN(u'tax18Sum', u'сумма НДС по ставке 18%'),
+    1140: VLN(u'tax10Sum', u'сумма НДС по ставке 10%'),
+    1141: VLN(u'tax18118Sum', u'сумма НДС по расч. ставке 18/118'),
+    1142: VLN(u'tax10110Sum', u'сумма НДС по расч. ставке 10/110'),
+    1143: VLN(u'tax0Sum', u'сумма расчетов с НДС по ставке 0%'),
+    1144: U32(u'receiptCorrectionCount', u'количество чеков коррекции'),
+    1145: STLV(u'sellCorrection', u'счетчики коррекций "приход"', 100),
+    1146: STLV(u'buyCorrection', u'счетчики коррекций "расход"', 100),
     1147: U32(u'1147', u'количество операций коррекции'),
-    1148: U32(u'1148', u'количество самостоятельных корректировок'),
-    1149: U32(u'1149', u'количество корректировок по предписанию'),
-    1150: VLN(u'1150', u'сумма коррекций'),
-    1151: VLN(u'1151', u'сумма коррекций НДС по ставке 18%'),
-    1152: VLN(u'1152', u'сумма коррекций НДС по ставке 10%'),
-    1153: VLN(u'1153', u'сумма коррекций НДС по расч. ставке 18/118'),
-    1154: VLN(u'1154', u'сумма коррекций НДС расч. ставке 10/110'),
-    1155: VLN(u'1155', u'сумма коррекций с НДС по ставке 0%'),
-    1157: STLV(u'1157', u'счетчики итогов ФН', 708),
-    1158: STLV(u'1158', u'счетчики итогов непереданных ФД', 708),
-    1162: ByteArray(u'1162', u'код товарной номенклатуры', 32),
-    1171: String(u'1171', u'телефон поставщика', 19),
-    1173: Byte(u'1173', u'тип коррекции'),
-    1174: STLV(u'1174', u'основание для коррекции', 292),
-    1177: String(u'1177', u'наименование основания для коррекции', 256),
-    1178: UnixTime(u'1178', u'дата документа основания для коррекции'),
-    1179: String(u'1179', u'номер документа основания для коррекции', 32),
-    1183: VLN(u'1183', u'сумма расчетов без НДС'),
-    1184: VLN(u'1184', u'сумма коррекций без НДС'),
-    1187: String(u'1187', u'место расчетов', 256),
-    1188: String(u'1188', u'версия ККТ', 8),
-    1189: Byte(u'1189', u'версия ФФД ККТ'),
-    1190: Byte(u'1190', u'версия ФФД ФН'),
-    1191: String(u'1191', u'дополнительный реквизит предмета расчета', 64),
-    1192: String(u'1192', u'дополнительный реквизит чека (БСО)', 16),
-    1193: Byte(u'1193', u'признак проведения азартных игр'),
-    1194: STLV(u'1194', u'счетчики итогов смены', 704),
-    1195: String(u'1195', u'адрес электронной почты отправителя чека', 64),
+    1148: U32(u'selfCorrectionCount', u'количество самостоятельных корректировок'),
+    1149: U32(u'orderCorrectionCount', u'количество корректировок по предписанию'),
+    1150: VLN(u'correctionSum', u'сумма коррекций'),
+    1151: VLN(u'tax18CorrectionSum', u'сумма коррекций НДС по ставке 18%'),
+    1152: VLN(u'tax10CorrectionSum', u'сумма коррекций НДС по ставке 10%'),
+    1153: VLN(u'tax18118CorrectionSum', u'сумма коррекций НДС по расч. ставке 18/118'),
+    1154: VLN(u'tax10110CorrectionSum', u'сумма коррекций НДС расч. ставке 10/110'),
+    1155: VLN(u'tax08CorrectionSum', u'сумма коррекций с НДС по ставке 0%'),
+    1157: STLV(u'fiscalDriveSumReports', u'счетчики итогов ФН', 708),
+    1158: STLV(u'notTransmittedDocumentsSumReports', u'счетчики итогов непереданных ФД', 708),
+    1162: ByteArray(u'productCode', u'код товарной номенклатуры', 32),
+    1171: String(u'providerPhone', u'телефон поставщика', 19),
+    1173: Byte(u'correctionType', u'тип коррекции'),
+    1174: STLV(u'correctionBase', u'основание для коррекции', 292),
+    1177: String(u'correctionName', u'наименование основания для коррекции', 256),
+    1178: UnixTime(u'correctionDocumentDate', u'дата документа основания для коррекции'),
+    1179: String(u'correctionDocumentNumber', u'номер документа основания для коррекции', 32),
+    1183: VLN(u'taxFreeSum', u'сумма расчетов без НДС'),
+    1184: VLN(u'taxFreeCorrectionSum', u'сумма коррекций без НДС'),
+    1187: String(u'retailPlace', u'место расчетов', 256),
+    1188: String(u'kktVersion', u'версия ККТ', 8),
+    1189: Byte(u'documentKktVersion', u'версия ФФД ККТ'),
+    1190: Byte(u'documentFnVersion', u'версия ФФД ФН'),
+    1191: String(u'propertiesString', u'дополнительный реквизит предмета расчета', 64),
+    1192: String(u'propertiesData', u'дополнительный реквизит чека (БСО)', 16),
+    1193: Byte(u'azartSign', u'признак проведения азартных игр'),
+    1194: STLV(u'shiftSumReports', u'счетчики итогов смены', 704),
+    1195: String(u'sellerAddress', u'адрес электронной почты отправителя чека', 64),
     1196: String(u'1196', u'QR-код', 10000),
-    1197: String(u'1197', u'единица измерения предмета расчета', 16),
-    1198: VLN(u'1198', u'размер НДС за единицу предмета расчета'),
-    1199: Byte(u'1199', u'ставка НДС'),
-    1200: VLN(u'1200', u'сумма НДС за предмет расчета'),
-    1201: VLN(u'1201', u'общая сумма расчетов'),
-    1203: String(u'1203', u'ИНН кассира', 12),
-    1205: U32(u'1205', u'коды причин изменения сведений о ККТ'),
-    1206: Byte(u'1206', u'сообщение оператора'),
-    1207: Byte(u'1207', u'продажа подакцизного товара'),
+    1197: String(u'unit', u'единица измерения предмета расчета', 16),
+    1198: VLN(u'unitNds', u'размер НДС за единицу предмета расчета'),
+    1199: Byte(u'nds', u'ставка НДС'),
+    1200: VLN(u'ndsSum', u'сумма НДС за предмет расчета'),
+    1201: VLN(u'totalSum', u'общая сумма расчетов'),
+    1203: String(u'operatorInn', u'ИНН кассира', 12),
+    1205: U32(u'correctionKktReasonCode', u'коды причин изменения сведений о ККТ'),
+    1206: Byte(u'operatorMessage', u'сообщение оператора'),
+    1207: Byte(u'exciseDutyProductSign', u'продажа подакцизного товара'),
     1208: String(u'1208', u'сайт чеков', 256),
-    1209: Byte(u'1209', u'версия ФФД'),
+    1209: Byte(u'fiscalDocumentFormatVer', u'версия ФФД'),
     1210: Byte(u'1210', u'признаки режимов работы ККТ'),
-    1212: U32(u'1212', u'признак предмета расчета'),
-    1213: U32(u'1213', u'ресурс ключей ФП'),
-    1214: Byte(u'1214', u'признак способа расчета'),
-    1215: VLN(u'1215', u'сумма предоплаты (зачет аванса)'),
-    1216: VLN(u'1216', u'сумма постоплаты (кредита)'),
-    1217: VLN(u'1217', u'сумма встречным предоставлением'),
+    1212: U32(u'productType', u'признак предмета расчета'),
+    1213: U32(u'fnKeyResource', u'ресурс ключей ФП'),
+    1214: Byte(u'paymentType', u'признак способа расчета'),
+    1215: VLN(u'prepaidSum', u'сумма предоплаты (зачет аванса)'),
+    1216: VLN(u'creditSum', u'сумма постоплаты (кредита)'),
+    1217: VLN(u'provisionSum', u'сумма встречным предоставлением'),
+    1218: VLN(u'prepaidSum', u'итоговая сумма в чеках (БСО) предоплатами', maxlen=6),
+    1219: VLN(u'creditSum', u'итоговая сумма в чеках (БСО) постоплатами', maxlen=6),
+    1220: VLN(u'provisionSum', u'итоговая сумма в чеках (БСО) встречными предоставлениями', maxlen=6),
+    1221: Byte(u'printInMachineSign', u'признак установки принтера в автомате'),
+
+    # для следующих тегов указаны тестовые номера, т.к. ФНС пока не согласовала новые
+    1222: Byte(u'1222', u'признак агента по предмету расчета'),
+    1223: STLV(u'bankAgent', u'данные агента', maxlen=512),
+    1224: STLV(u'provider', u'данные поставщика', maxlen=512),
+    1225: String(u'providerName', u'наименование поставщика', maxlen=256),
+    1226: String(u'providerInn', u'ИНН поставщика', maxlen=12)
 }
 
-DOCS_BY_NAME = dict((doc.name, (ty, doc)) for ty, doc in DOCUMENTS.items())
 DOCS_BY_DESC = dict((doc.desc, (ty, doc)) for ty, doc in DOCUMENTS.items())
+
+VERSIONS = {1: '1.0', 2: '1.05', 3: '1.1'}
 
 
 class NullValidator(object):
-    def validate(self, doc: dict):
+    def validate(self, doc: dict, version: str):
         pass
 
 
 class DocumentValidator(object):
-    def __init__(self, path):
-        path = os.path.join(path, 'document.schema.json')
-        with open(path, encoding='utf-8') as fh:
-            self._root = json.loads(fh.read())
-            self._resolver = jsonschema.RefResolver('file://' + path, None)
+    def __init__(self, versions, path, skip_unknown=False):
+        """
+        Класс для валидации документов от ККТ по json-схеме.
+        :param versions: поддерживаемые версии протокола, например ['1.0', '1.05'].
+        :param path: путь до директории, которая содержит все директории со схемами, разбитым по версиям,
+        например, схемы для протокола 1.0 должны лежать в <path>/1.0/
+        :param skip_unknow: если номер версии отличается от поддерживаемых пропускать валидацию
+        """
+        self._schemas = {}
+        self._skip_unknown = skip_unknown
+        for version in versions:
+            full_path = os.path.join(path, version, 'document.schema.json')
+            with open(full_path, encoding='utf-8') as fh:
+                self._schemas[version] = {
+                    'root': json.loads(fh.read()),
+                    'resolver': jsonschema.RefResolver('file://' + full_path, None)
+                }
 
-    def validate(self, doc: dict):
-        jsonschema.validate(doc, self._root, resolver=self._resolver)
+    def validate(self, doc: dict, version: str):
+        """
+        Валидация документа на соответствие json схеме протокола
+        :param doc:
+        :param version: номер версии, например '1.0' или '1.05'
+        :return: Exception в случае ошибки валидации
+        """
+        schema = self._schemas.get(version)
+        if schema:
+            jsonschema.validate(doc, schema['root'], resolver=schema['resolver'])
+        elif not self._skip_unknown:
+            raise ValidationError('Version ' + version + ' is unsupported')
 
 
 def pack_json(doc: dict, docs: dict = DOCS_BY_DESC) -> bytes:
