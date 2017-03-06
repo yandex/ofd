@@ -57,7 +57,6 @@
                 }
             },
             "required": [
-                "user",
                 "userInn",
                 "requestNumber",
                 "dateTime",
