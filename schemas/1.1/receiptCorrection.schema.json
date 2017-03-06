@@ -108,7 +108,6 @@
             },
             "required": [
                 "fiscalDocumentFormatVer",
-                "retailPlace",
                 "correctionType",
                 "correctionBase",
 

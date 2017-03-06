@@ -77,9 +77,6 @@
                     },
                     "required": [
                         "fiscalDocumentFormatVer",
-                        "retailPlace",
-                        "retailPlaceAddress",
-
 
                         "code",
                         "userInn",
