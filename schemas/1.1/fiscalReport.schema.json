@@ -21,7 +21,7 @@
                             "$ref": "dictionary.schema.json#/definitions/exciseDutyProductSign"
                         },
                         "operatorInn": {
-                            "$ref": "dictionary.schema.json#/definitions/operatorInn"
+                            "$ref": "dictionary.schema.json#/definitions/cashierInn"
                         },
                         "fnKeyResource": {
                             "$ref": "dictionary.schema.json#/definitions/fnKeyResource"

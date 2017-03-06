@@ -708,6 +708,11 @@
             "type": "string",
             "maxLength": 16,
             "description": "дополнительный реквизит чека (БСО)"
+        },
+        "cashierInn": {
+            "type": "string",
+            "pattern": "(^[0-9 ]{10}$)|(^[0-9 ]{12}$)|(^$)",
+            "description": "ИНН кассира"
         }
     }
 }

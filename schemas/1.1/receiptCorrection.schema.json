@@ -101,6 +101,9 @@
                 },
                 "rawData": {
                     "$ref": "dictionary.schema.json#/definitions/rawData"
+                },
+                "operatorInn": {
+                    "$ref": "dictionary.schema.json#/definitions/cashierInn"
                 }
             },
             "required": [

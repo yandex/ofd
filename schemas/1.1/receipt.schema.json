@@ -135,7 +135,7 @@
                     "$ref": "dictionary.schema.json#/definitions/operatorAddress"
                 },
                 "operatorInn": {
-                    "$ref": "dictionary.schema.json#/definitions/operatorInn"
+                    "$ref": "dictionary.schema.json#/definitions/cashierInn"
                 },
                 "modifiers": {
                     "type": "array",

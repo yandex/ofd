@@ -21,7 +21,7 @@
                             "$ref": "dictionary.schema.json#/definitions/retailPlaceAddress"
                         },
                         "operatorInn": {
-                            "$ref": "dictionary.schema.json#/definitions/operatorInn"
+                            "$ref": "dictionary.schema.json#/definitions/cashierInn"
                         },
                         "fiscalDriveSumReports": {
                             "$ref": "dictionary.schema.json#/definitions/fiscalDriveSumReports"

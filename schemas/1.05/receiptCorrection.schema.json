@@ -75,6 +75,9 @@
                 "operator": {
                     "$ref": "dictionary.schema.json#/definitions/operator"
                 },
+                "operatorInn": {
+                    "$ref": "dictionary.schema.json#/definitions/cashierInn"
+                },
                 "kktRegId": {
                     "$ref": "dictionary.schema.json#/definitions/kktRegId"
                 },
