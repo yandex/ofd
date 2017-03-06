@@ -15,7 +15,7 @@
                             "$ref": "dictionary.schema.json#/definitions/fiscalDocumentFormatVer"
                         },
                         "operatorInn": {
-                            "$ref": "dictionary.schema.json#/definitions/operatorInn"
+                            "$ref": "dictionary.schema.json#/definitions/cashierInn"
                         },
                         "operatorMessage": {
                             "$ref": "dictionary.schema.json#/definitions/operatorMessage"
