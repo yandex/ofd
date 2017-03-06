@@ -98,7 +98,6 @@
                     },
                     "required": [
                         "code",
-                        "user",
                         "userInn",
                         "dateTime",
                         "shiftNumber",
