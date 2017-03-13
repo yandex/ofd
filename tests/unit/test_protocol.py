@@ -216,6 +216,27 @@ class TestFrameHeader(unittest.TestCase):
         head.recalculate_crc(data)
         self.assertEqual(60419, head.crc)
 
+
+class TestProtocolPack(unittest.TestCase):
+    def test_pack_array_of_ints_from_json(self):
+        doc = {
+            'Отчёт об изменении параметров регистрации': {
+                'коды причин изменения сведений о ККТ': [12, 9]
+            }
+        }
+
+        code1 = b''
+        code1 += struct.pack('<HH', 1205, 4) + struct.pack('<I', 12)
+
+        code2 = b''
+        code2 += struct.pack('<HH', 1205, 4) + struct.pack('<I', 9)
+
+        msg = b''
+        msg += struct.pack('<HH', 11, len(code1) + len(code2))
+        msg += code1 + code2
+
+        self.assertEqual(msg, ofd.protocol.pack_json(doc))
+
     def test_pack_byte_from_json(self):
         doc = {
             'код ответа ОФД': 42,
@@ -238,6 +259,27 @@ class TestFrameHeader(unittest.TestCase):
         wr = b''
         wr += struct.pack('<HH', 1047, len(wr0))
         wr += wr0
+        self.assertEqual(wr, ofd.protocol.pack_json(doc))
+
+    def test_pack_nested_array_from_json_several_items(self):
+        doc = {
+            'параметр настройки': [
+                {
+                    'значение типа целое': 42,
+                },
+                {
+                    'значение типа целое': 315,
+                },
+            ]
+        }
+
+        val0 = struct.pack('<HH', 1015, 4) + ofd.U32('', '').pack(42)
+        item0 = struct.pack('<HH', 1047, len(val0)) + val0
+
+        val1 = struct.pack('<HH', 1015, 4) + ofd.U32('', '').pack(315)
+        item1 = struct.pack('<HH', 1047, len(val1)) + val1
+
+        wr = item0 + item1
         self.assertEqual(wr, ofd.protocol.pack_json(doc))
 
     def test_pack_nested_object_from_json(self):
@@ -266,6 +308,7 @@ class TestFrameHeader(unittest.TestCase):
         wr3 += struct.pack('<HH', 7, len(wr2))
         wr3 += wr2
         self.assertEqual(wr3, ofd.protocol.pack_json(doc))
+
 
 if __name__ == '__main__':
     unittest.main()

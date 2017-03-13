@@ -66,10 +66,11 @@ class Byte(object):
 
 
 class U32(object):
-    def __init__(self, name, desc):
+    def __init__(self, name, desc, cardinality=None):
         self.name = name
         self.desc = desc
-        self.maxlen = 4
+        self.maxlen = 4,
+        self.cardinality = cardinality
 
     @staticmethod
     def pack(data):
@@ -629,7 +630,7 @@ DOCUMENTS = {
     1200: VLN(u'ndsSum', u'сумма НДС за предмет расчета'),
     1201: VLN(u'totalSum', u'общая сумма расчетов'),
     1203: String(u'operatorInn', u'ИНН кассира', 12),
-    1205: U32(u'correctionKktReasonCode', u'коды причин изменения сведений о ККТ'),
+    1205: U32(u'correctionKktReasonCode', u'коды причин изменения сведений о ККТ', cardinality='+'),
     1206: Byte(u'operatorMessage', u'сообщение оператора'),
     1207: Byte(u'exciseDutyProductSign', u'продажа подакцизного товара'),
     1208: String(u'1208', u'сайт чеков', 256),
@@ -708,17 +709,24 @@ def pack_json(doc: dict, docs: dict = DOCS_BY_DESC) -> bytes:
     wr = b''
     for name, value in doc.items():
         ty, cls = docs[name]
-        if isinstance(value, dict):
-            data = pack_json(value, docs=docs)
-        elif isinstance(value, list):
-            data = b''
+        if isinstance(value, list):
+            # в случае массива записываем все элементы массива одним за другим
+            # без родительского тега
+            list_tags = b''
             for item in value:
-                data += pack_json(item, docs=docs)
-        else:
-            data = cls.pack(value)
+                if isinstance(item, dict):
+                    item_data = pack_json(item, docs=docs)
+                else:
+                    item_data = cls.pack(item)
+                list_tags += struct.pack('<HH', ty, len(item_data)) + item_data
 
-        wr += struct.pack('<HH', ty, len(data))
-        wr += data
+            wr += list_tags
+        else:
+            if isinstance(value, dict):
+                data = pack_json(value, docs=docs)
+            else:
+                data = cls.pack(value)
+            wr += struct.pack('<HH', ty, len(data)) + data
 
     return wr
 
