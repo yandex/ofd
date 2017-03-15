@@ -8,6 +8,7 @@ import crcmod.predefined
 import decimal
 import struct
 import jsonschema
+import base64
 from jsonschema import ValidationError
 
 
@@ -20,6 +21,11 @@ FLK_ERROR = 14  # Ошибка форматно-логического конт�
 
 class ProtocolError(RuntimeError):
     pass
+
+
+class InvalidProtocolDocument(ProtocolError):
+    def __init__(self):
+        super(InvalidProtocolDocument, self).__init__('invalid document')
 
 
 class Byte(object):
@@ -736,3 +742,56 @@ def extract_fiscal_sign_for_print(full_sign):
     bn = struct.pack('>Q', full_sign)
     data = bn[2:6]
     return struct.unpack('<Q', data + b'\x00' * (8 - len(data)))[0]
+
+
+class ProtocolPacker:
+    @classmethod
+    def unpack_container_message(cls, container_message_raw, fiscal_sign):
+        ty, length = struct.unpack('<HH', container_message_raw[:4])
+        stlv_doc = DOCUMENTS[ty]
+
+        container_message = stlv_doc.unpack(container_message_raw[4:4 + length])
+        container_message['rawData'] = base64.b64encode(container_message_raw + fiscal_sign).decode('utf8')
+
+        if stlv_doc.name in PAYMENT_DOCUMENTS:
+            container_message[stlv_doc.name + 'Code'] = ty
+        else:
+            container_message['code'] = ty
+
+        container_message = cls.format_message_fields(container_message)
+        container_message = {'document': {stlv_doc.name: container_message}}
+
+        if not isinstance(container_message, dict):
+            raise InvalidProtocolDocument()
+
+        return container_message, stlv_doc
+
+    @classmethod
+    def format_message_fields(cls, container_message):
+        kkt_reg_id = container_message.get('kktRegId')
+        if kkt_reg_id:
+            container_message['kktRegId'] = kkt_reg_id.lstrip().ljust(20)
+
+        inn_fields = ['userInn', 'ofdInn', 'operatorInn']
+        for field in inn_fields:
+            if field in container_message:
+                container_message[field] = cls._format_inn(container_message[field])
+
+        return container_message
+
+    @classmethod
+    def _format_inn(cls, inn):
+        if not inn:
+            return inn
+
+        inn = inn.strip()
+        # некоторые кассы слева пишут нуля для 10-значных ИНН дополняя их до 12 символов
+        # это нарушение формата, такие нули должны обрезаться
+        if len(inn) > 10 and inn.startswith('00'):
+            inn = inn[2:]
+
+        return inn.ljust(12)
+
+
+def unpack_container_message(container_message_raw, fiscal_sign):
+    return ProtocolPacker.unpack_container_message(container_message_raw, fiscal_sign)

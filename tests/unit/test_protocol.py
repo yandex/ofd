@@ -4,6 +4,7 @@ import array
 import ofd
 import struct
 import unittest
+from ofd.protocol import ProtocolPacker
 
 
 class TestU32(unittest.TestCase):
@@ -308,6 +309,22 @@ class TestProtocolPack(unittest.TestCase):
         wr3 += struct.pack('<HH', 7, len(wr2))
         wr3 += wr2
         self.assertEqual(wr3, ofd.protocol.pack_json(doc))
+
+
+class TestProtocolUnpack:
+
+    def test_trim_inn_lead_zeros(self):
+        doc = {
+            'userInn': '0234523423  ',
+            'ofdInn': '005787888828',
+            'operatorInn': '5521243423'
+        }
+
+        doc = ProtocolPacker.format_message_fields(doc)
+
+        assert '0234523423  ' == doc['userInn']
+        assert '5787888828  ' == doc['ofdInn']
+        assert '5521243423  ' == doc['operatorInn']
 
 
 if __name__ == '__main__':
