@@ -652,11 +652,9 @@ DOCUMENTS = {
     1219: VLN(u'creditSum', u'итоговая сумма в чеках (БСО) постоплатами', maxlen=6),
     1220: VLN(u'provisionSum', u'итоговая сумма в чеках (БСО) встречными предоставлениями', maxlen=6),
     1221: Byte(u'printInMachineSign', u'признак установки принтера в автомате'),
-
-    # для следующих тегов указаны тестовые номера, т.к. ФНС пока не согласовала новые
-    1222: Byte(u'1222', u'признак агента по предмету расчета'),
-    1223: STLV(u'bankAgent', u'данные агента', maxlen=512),
-    1224: STLV(u'provider', u'данные поставщика', maxlen=512),
+    1222: Byte(u'paymentAgentByProductType', u'признак агента по предмету расчета'),
+    1223: STLV(u'paymentAgentData', u'данные агента', maxlen=512),
+    1224: STLV(u'providerData', u'данные поставщика', maxlen=512),
     1225: String(u'providerName', u'наименование поставщика', maxlen=256),
     1226: String(u'providerInn', u'ИНН поставщика', maxlen=12)
 }
