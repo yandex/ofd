@@ -142,7 +142,7 @@
                         "code",
                         "user",
                         "userInn",
-                        "taxationsType",
+                        "taxationType",
                         "dateTime",
                         "kktRegId",
                         "offlineMode",

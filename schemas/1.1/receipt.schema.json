@@ -134,6 +134,9 @@
                 "operatorAddress": {
                     "$ref": "dictionary.schema.json#/definitions/operatorAddress"
                 },
+                "operatorTransferInn": {
+                    "$ref": "dictionary.schema.json#/definitions/operatorTransferInn"
+                },
                 "operatorInn": {
                     "$ref": "dictionary.schema.json#/definitions/cashierInn"
                 },

@@ -34,7 +34,7 @@ class Byte(object):
     """
     STRUCT = struct.Struct('B')
 
-    def __init__(self, name, desc, cardinality=None):
+    def __init__(self, name, desc, cardinality=None, parents=None):
         """
         Initialize a single-byte document item with the given name and description.
         :param name: name as it is encoded in Federal Tax Service.
@@ -47,6 +47,7 @@ class Byte(object):
         self.desc = desc
         self.cardinality = cardinality
         self.maxlen = self.STRUCT.size
+        self.parents = parents
 
     def pack(self, data):
         """
@@ -72,11 +73,12 @@ class Byte(object):
 
 
 class U32(object):
-    def __init__(self, name, desc, cardinality=None):
+    def __init__(self, name, desc, cardinality=None, parents=None):
         self.name = name
         self.desc = desc
         self.maxlen = 4,
-        self.cardinality = cardinality
+        self.cardinality = cardinality,
+        self.parents = parents
 
     @staticmethod
     def pack(data):
@@ -88,10 +90,11 @@ class U32(object):
 
 
 class String(object):
-    def __init__(self, name, desc, maxlen):
+    def __init__(self, name, desc, maxlen, parents=None):
         self.name = name
         self.desc = desc
         self.maxlen = maxlen
+        self.parents = parents
 
     @staticmethod
     def pack(value):
@@ -106,10 +109,11 @@ class String(object):
 
 
 class ByteArray(object):
-    def __init__(self, name, desc, maxlen):
+    def __init__(self, name, desc, maxlen, parents=None):
         self.name = name
         self.desc = desc
         self.maxlen = maxlen
+        self.parents = parents
 
     @staticmethod
     def pack(value):
@@ -124,10 +128,11 @@ class ByteArray(object):
 
 
 class UnixTime(object):
-    def __init__(self, name, desc):
+    def __init__(self, name, desc, parents=None):
         self.name = name
         self.desc = desc
         self.maxlen = 4
+        self.parents = parents
 
     @staticmethod
     def pack(time):
@@ -139,10 +144,11 @@ class UnixTime(object):
 
 
 class VLN(object):
-    def __init__(self, name, desc, maxlen=8):
+    def __init__(self, name, desc, maxlen=8, parents=None):
         self.name = name
         self.desc = desc
         self.maxlen = maxlen
+        self.parents = parents
 
     def pack(self, data):
         packed = struct.pack('<Q', data)
@@ -166,10 +172,11 @@ class VLN(object):
 
 
 class FVLN(object):
-    def __init__(self, name, desc, maxlen):
+    def __init__(self, name, desc, maxlen, parents=None):
         self.name = name
         self.desc = desc
         self.maxlen = maxlen
+        self.parents = parents
 
     def pack(self, data):
         str_data = str(data)
@@ -204,11 +211,12 @@ class FVLN(object):
 
 
 class STLV(object):
-    def __init__(self, name, desc, maxlen, cardinality='1'):
+    def __init__(self, name, desc, maxlen, cardinality='1', parents=None):
         self.name = name
         self.desc = desc
         self.maxlen = maxlen
         self.cardinality = cardinality
+        self.parents = parents
 
     @staticmethod
     def pack(data):
@@ -472,11 +480,14 @@ DOCUMENTS = {
     1013: String(u'kktNumber', u'Заводской номер ККТ', maxlen=20),
     1014: String(u'<unknown-1014>', u'значение типа строка', maxlen=64),
     1015: U32(u'<unknown-1015>', u'значение типа целое'),
-    1016: String(u'operatorInn', u'ИНН оператора по переводу денежных средств', maxlen=12),
+
+    # ToDo: переименовать в operatorTransferInn при введении новой версии протокола
+    1016: String(u'operatorInn', u'ИНН оператора по переводу денежных средств', maxlen=12, parents=[3, 4]),
+
     1017: String(u'ofdInn', u'ИНН ОФД', maxlen=12),
     1018: String(u'userInn', u'ИНН пользователя', maxlen=12),
     1019: String(u'<unknown-1019>', u'Информационное cообщение', maxlen=64),
-    1020: VLN(u'totalSum', u'ИТОГ'),
+    1020: VLN(u'totalSum', u'ИТОГ', parents=[3, 31, 4, 41]),
     1021: String(u'operator', u'Кассир', maxlen=64),
     1022: Byte(u'<unknown-1022>', u'код ответа ОФД'),
     1023: FVLN(u'quantity', u'Количество', maxlen=8),
@@ -511,21 +522,21 @@ DOCUMENTS = {
     1052: Byte(u'fiscalDriveMemoryExceededSign', u'Признак переполнения памяти ФН'),
     1053: Byte(u'ofdResponseTimeoutSign', u'Признак превышения времени ожидания ответа ОФД'),
     1054: Byte(u'operationType', u'Признак расчета'),
-    1055: Byte(u'taxationType', u'применяемая система налогообложения'),
+    1055: Byte(u'taxationType', u'применяемая система налогообложения', parents=[3, 31, 4, 41]),
     1056: Byte(u'encryptionSign', u'Признак шифрования'),
     1057: Byte(u'paymentAgentType', u'Применение платежными агентами (субагентами)'),
     1058: Byte(u'<unknown-1058>', u'Применение банковскими агентами (субагентами)'),
     1059: STLV(u'items', u'наименование товара (реквизиты)', 328, '*'),
     1060: String(u'<unknown-1060>', u'Сайт налогового органа', maxlen=64),
     1061: String(u'<unknown-1061>', u'Сайт ОФД', maxlen=64),
-    1062: Byte(u'taxationsType', u'системы налогообложения'),  # TODO: Имя придумал сам.
+    1062: Byte(u'taxationType', u'системы налогообложения', parents=[1, 11]),
     1063: FVLN(u'discount', u'Скидка (ставка)', 8),
     1064: VLN(u'discountSum', u'Скидка (сумма)'),
     1065: String(u'<unknown-1065>', u'Сокращенное наименование налога', maxlen=10),
-    1066: String(u'message', u'Сообщение', maxlen=256),
+    1066: String(u'<unknown-1066>', u'Сообщение', maxlen=256),
     1067: STLV(u'<unknown-1067>', u'Сообщение оператора для ККТ', maxlen=216),
     1068: STLV(u'<unknown-1068>', u'сообщение оператора для ФН', maxlen=169),
-    1069: STLV(u'message', u'Сообщение оператору', 328, '*'),
+    1069: STLV(u'<unknown-1069>', u'Сообщение оператору', 328, '*'),
     1070: FVLN(u'<unknown-1070>', u'Ставка налога', maxlen=5),
     1071: STLV(u'stornoItems', u'сторно товара (реквизиты)', 328, '*'),
     1072: VLN(u'<unknown-1072>', u'Сумма налога', maxlen=8),
@@ -588,8 +599,8 @@ DOCUMENTS = {
     1131: STLV(u'buyOper', u'счетчики операций "расход"', 116),
     1132: STLV(u'buyReturnOper', u'счетчики операций "возврат расхода"', 116),
     1133: STLV(u'receiptCorrection', u'счетчики операций по чекам коррекции', 216),
-    1134: U32(u'receiptCount', u'количество чеков со всеми признаками расчетов'),
-    1135: U32(u'receiptCount', u'количество чеков по признаку расчетов'),
+    1134: U32(u'receiptCount', u'количество чеков со всеми признаками расчетов', parents=[1157, 1194, 1158]),
+    1135: U32(u'receiptCount', u'количество чеков по признаку расчетов', parents=[1129, 1130, 1131, 1132]),
     1136: VLN(u'cashSum', u'сумма расчетов наличными'),
     1138: VLN(u'ecashSum', u'сумма расчетов электронными'),
     1139: VLN(u'tax18Sum', u'сумма НДС по ставке 18%'),
@@ -634,8 +645,8 @@ DOCUMENTS = {
     1198: VLN(u'unitNds', u'размер НДС за единицу предмета расчета'),
     1199: Byte(u'nds', u'ставка НДС'),
     1200: VLN(u'ndsSum', u'сумма НДС за предмет расчета'),
-    1201: VLN(u'totalSum', u'общая сумма расчетов'),
-    1203: String(u'operatorInn', u'ИНН кассира', 12),
+    1201: VLN(u'totalSum', u'общая сумма расчетов', parents=[1129, 1130, 1131, 1132]),
+    1203: String(u'operatorInn', u'ИНН кассира', 12, parents=[1, 11, 2, 3, 4, 31, 41, 5, 6]),
     1205: U32(u'correctionKktReasonCode', u'коды причин изменения сведений о ККТ', cardinality='+'),
     1206: Byte(u'operatorMessage', u'сообщение оператора'),
     1207: Byte(u'exciseDutyProductSign', u'продажа подакцизного товара'),
@@ -645,11 +656,14 @@ DOCUMENTS = {
     1212: U32(u'productType', u'признак предмета расчета'),
     1213: U32(u'fnKeyResource', u'ресурс ключей ФП'),
     1214: Byte(u'paymentType', u'признак способа расчета'),
-    1215: VLN(u'prepaidSum', u'сумма предоплаты (зачет аванса)'),
-    1216: VLN(u'creditSum', u'сумма постоплаты (кредита)'),
-    1217: VLN(u'provisionSum', u'сумма встречным предоставлением'),
-    1218: VLN(u'prepaidSum', u'итоговая сумма в чеках (БСО) предоплатами', maxlen=6),
-    1219: VLN(u'creditSum', u'итоговая сумма в чеках (БСО) постоплатами', maxlen=6),
+    1215: VLN(u'prepaidSum', u'сумма предоплаты (зачет аванса)', parents=[31, 41]),
+    1216: VLN(u'creditSum', u'сумма постоплаты (кредита)', parents=[31, 41]),
+    1217: VLN(u'provisionSum', u'сумма встречным предоставлением', parents=[31, 41]),
+    1218: VLN(u'prepaidSum', u'итоговая сумма в чеках (БСО) предоплатами', maxlen=6,
+              parents=[1129, 1130, 1131, 1132, 1145, 1146]),
+    1219: VLN(u'creditSum', u'итоговая сумма в чеках (БСО) постоплатами', maxlen=6,
+              parents=[1129, 1130, 1131, 1132, 1145, 1146]),
+
     1220: VLN(u'provisionSum', u'итоговая сумма в чеках (БСО) встречными предоставлениями', maxlen=6),
     1221: Byte(u'printInMachineSign', u'признак установки принтера в автомате'),
     1222: Byte(u'paymentAgentByProductType', u'признак агента по предмету расчета'),
@@ -660,8 +674,32 @@ DOCUMENTS = {
 }
 
 DOCS_BY_DESC = dict((doc.desc, (ty, doc)) for ty, doc in DOCUMENTS.items())
-
 VERSIONS = {1: '1.0', 2: '1.05', 3: '1.1'}
+
+
+def group_by_name(docs):
+    """
+    Группируем теги по name - т.к. поле неуникальное, то возможны коллизиции. В этом случае в значение пишем list
+    всех соответствующих значений
+    :param docs: исходный dict tag -> object
+    :return: dict name -> object or list
+    """
+    result = {}
+    for ty, doc in docs.items():
+        k = doc.name
+        v = (ty, doc)
+
+        if k not in result:
+            result[k] = v
+        elif isinstance(v, list):
+            result[k].append(v)
+        else:
+            result[k] = [result[k], v]
+
+    return result
+
+
+DOCS_BY_NAME = group_by_name(DOCUMENTS)
 
 
 class NullValidator(object):
@@ -702,24 +740,49 @@ class DocumentValidator(object):
             raise ValidationError('Version ' + version + ' is unsupported')
 
 
-def pack_json(doc: dict, docs: dict = DOCS_BY_DESC) -> bytes:
+def _select_tag_by_key(key, docs, parent_ty):
+    """
+    workaround для решения проблемы протокола
+    # один name может использоваться несколькими тегами (по протоколу ФНС)
+    # в этом случае выбираем нужный тег на основе родительского - проверяем есть ли он в списке
+    """
+    val = docs[key]
+    if isinstance(val, tuple):
+        return val
+
+    if not isinstance(val, list):
+        raise ProtocolError('Value by key {} must be list or tuple: {}'.format(key, val))
+
+    for el in val:
+        parents = el[1].parents
+        if parents and parent_ty in parents:
+            return el
+        elif parent_ty is None and not parents:
+            return el
+
+    # если соответствие не найдено, то кидаем ошибку - это лучшем, чем неправильно зашифровать ответ
+    raise ProtocolError('Cant find correct tags for {} with parent {}'.format(key, parent_ty))
+
+
+def pack_json(doc: dict, docs: dict = DOCS_BY_DESC, parent_ty=None) -> bytes:
     """
     Packs the given JSON document into a bytearray using optionally specified documents container.
 
     :param doc: valid JSON document as object.
     :param docs: documents container.
+    :param parent_ty: value of parent tag. None for root element
     :return: packed document representation as a bytearray.
     """
     wr = b''
     for name, value in doc.items():
-        ty, cls = docs[name]
+        ty, cls = _select_tag_by_key(key=name, docs=docs, parent_ty=parent_ty)
         if isinstance(value, list):
             # в случае массива записываем все элементы массива одним за другим
             # без родительского тега
             list_tags = b''
             for item in value:
                 if isinstance(item, dict):
-                    item_data = pack_json(item, docs=docs)
+                    item_data = pack_json(item, docs=docs, parent_ty=ty)
                 else:
                     item_data = cls.pack(item)
                 list_tags += struct.pack('<HH', ty, len(item_data)) + item_data
@@ -727,7 +790,7 @@ def pack_json(doc: dict, docs: dict = DOCS_BY_DESC) -> bytes:
             wr += list_tags
         else:
             if isinstance(value, dict):
-                data = pack_json(value, docs=docs)
+                data = pack_json(value, docs=docs, parent_ty=ty)
             else:
                 data = cls.pack(value)
             wr += struct.pack('<HH', ty, len(data)) + data

@@ -4,7 +4,7 @@ import array
 import ofd
 import struct
 import unittest
-from ofd.protocol import ProtocolPacker
+from ofd.protocol import ProtocolPacker, pack_json, DOCS_BY_NAME, unpack_container_message
 
 
 class TestU32(unittest.TestCase):
@@ -309,6 +309,68 @@ class TestProtocolPack(unittest.TestCase):
         wr3 += struct.pack('<HH', 7, len(wr2))
         wr3 += wr2
         self.assertEqual(wr3, ofd.protocol.pack_json(doc))
+
+    def test_pack_from_eng_json(self):
+        doc = {
+            "receipt": {
+                "taxationType": 1,
+                "fiscalDocumentNumber": 35,
+                "stornoItems": [
+                    {
+                        "sum": 2687,
+                        "barcode": "0000000000000000",
+                        "nds18": 410,
+                        "quantity": 5.0,
+                        "name": "Тестовый товар",
+                        "price": 625,
+                        "modifiers": [
+                            {
+                                "discountSum": 438,
+                                "discount": 14.0
+                            }
+                        ]
+                    }
+                ],
+                "operationType": 3,
+                "requestNumber": 3,
+                "items": [
+                    {
+                        "sum": 10750,
+                        "barcode": "0000000000000000",
+                        "nds18": 1640,
+                        "quantity": 5.0,
+                        "name": "Тестовый товар",
+                        "price": 2500,
+                        "modifiers": [
+                            {
+                                "discountSum": 1750,
+                                "discount": 14.0
+                            }
+                        ]
+                    }
+                ],
+                "operator": "СИС. АДМИНИСТРАТОР",
+                "fiscalSign": 140323280847921,
+                "totalSum": 8063,
+                "dateTime": 1481906640,
+                "userInn": "7702203276  ",
+                "nds18": 1230,
+                "user": "РАПКАТ-ЦЕНТР",
+                "ecashTotalSum": 7500,
+                "fiscalDriveNumber": "9999078900001366",
+                "shiftNumber": 4,
+                "cashTotalSum": 563,
+                "kktRegId": "0000000003038927    "
+            }
+        }
+        message = pack_json(doc, docs=DOCS_BY_NAME)
+        result = unpack_container_message(message, fiscal_sign=b'\x00' * 8)[0]['document']
+        doc_name = next(iter(result))
+
+        del result[doc_name]['receiptCode']
+        del result[doc_name]['rawData']
+
+        assert result == doc
 
 
 class TestProtocolUnpack:

@@ -137,6 +137,9 @@
                 "operatorInn": {
                     "$ref": "dictionary.schema.json#/definitions/cashierInn"
                 },
+                "operatorTransferInn": {
+                    "$ref": "dictionary.schema.json#/definitions/operatorTransferInn"
+                },
                 "modifiers": {
                     "type": "array",
                     "uniqueItems": false,
