@@ -489,7 +489,7 @@ DOCUMENTS = {
     1019: String(u'<unknown-1019>', u'Информационное cообщение', maxlen=64),
     1020: VLN(u'totalSum', u'ИТОГ', parents=[3, 31, 4, 41]),
     1021: String(u'operator', u'Кассир', maxlen=64),
-    1022: Byte(u'<unknown-1022>', u'код ответа ОФД'),
+    1022: Byte(u'ofdResponseCode', u'код ответа ОФД'),  # name выбрано самостоятельно
     1023: FVLN(u'quantity', u'Количество', maxlen=8),
     1024: String(u'<unknown-1024>', u'Наименование банковского агента', maxlen=64),
     1025: String(u'<unknown-1025>', u'Наименование банковского субагента', maxlen=64),
@@ -535,7 +535,7 @@ DOCUMENTS = {
     1065: String(u'<unknown-1065>', u'Сокращенное наименование налога', maxlen=10),
     1066: String(u'<unknown-1066>', u'Сообщение', maxlen=256),
     1067: STLV(u'<unknown-1067>', u'Сообщение оператора для ККТ', maxlen=216),
-    1068: STLV(u'<unknown-1068>', u'сообщение оператора для ФН', maxlen=169),
+    1068: STLV(u'messageToFn', u'сообщение оператора для ФН', maxlen=169),   # name выбрано самостоятельно
     1069: STLV(u'<unknown-1069>', u'Сообщение оператору', 328, '*'),
     1070: FVLN(u'<unknown-1070>', u'Ставка налога', maxlen=5),
     1071: STLV(u'stornoItems', u'сторно товара (реквизиты)', 328, '*'),
