@@ -465,6 +465,7 @@ DOCUMENTS = {
     DocCodes.CLOSE_ARCHIVE: STLV(u'closeArchive', u'Отчёт о закрытии фискального накопителя', maxlen=432),
     DocCodes.OPERATOR_ACK: STLV(u'operatorAck(?)', u'подтверждение оператора', maxlen=512),
 
+    1000: String(u'docName', u'наименование документа', maxlen=256),  # есть в протоколе, но не отправляется в ФНС
     1001: Byte(u'autoMode', u'автоматический режим'),
     1002: Byte(u'offlineMode', u'автономный режим'),
     1003: String(u'<unknown-1003>', u'адрес банковского агента', maxlen=256),
@@ -818,6 +819,10 @@ class ProtocolPacker:
             container_message[stlv_doc.name + 'Code'] = ty
         else:
             container_message['code'] = ty
+
+        # тег 1000 (docName) не включается в док для ФНС
+        if 'docName' in container_message:
+            del container_message['docName']
 
         container_message = cls.format_message_fields(container_message)
         container_message = {'document': {stlv_doc.name: container_message}}
