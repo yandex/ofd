@@ -719,8 +719,11 @@ class DocumentValidator(object):
         """
         self._schemas = {}
         self._skip_unknown = skip_unknown
+        schema_dir = os.path.expanduser(path)
+        schema_dir = os.path.abspath(schema_dir)
+
         for version in versions:
-            full_path = os.path.join(path, version, 'document.schema.json')
+            full_path = os.path.join(schema_dir, version, 'document.schema.json')
             with open(full_path, encoding='utf-8') as fh:
                 self._schemas[version] = {
                     'root': json.loads(fh.read()),
