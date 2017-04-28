@@ -364,7 +364,7 @@ class TestProtocolPack(unittest.TestCase):
             }
         }
         message = pack_json(doc, docs=DOCS_BY_NAME)
-        result = unpack_container_message(message, fiscal_sign=b'\x00' * 8)[0]['document']
+        result = unpack_container_message(message, fiscal_sign=b'\x00' * 8)[0]
         doc_name = next(iter(result))
 
         del result[doc_name]['receiptCode']

@@ -3,96 +3,87 @@
     "type": "object",
     "description": "Документ полученый от ККТ",
     "properties": {
-        "document": {
-            "type": "object",
-            "description": "1",
-            "properties": {
-                "fiscalReport": {
-                    "$ref": "fiscalReport.schema.json#/properties/document/properties/fiscalReport"
-                },
-                "fiscalReportCorrection": {
-                    "$ref": "fiscalReportCorrection.schema.json#/properties/document/properties/fiscalReportCorrection"
-                },
-                "openShift": {
-                    "$ref": "openShift.schema.json#/properties/document/properties/openShift"
-                },
-                "currentStateReport": {
-                    "$ref": "currentStateReport.schema.json#/properties/document/properties/currentStateReport"
-                },
-                "receipt": {
-                    "$ref": "receipt.schema.json#/properties/document/oneOf/0/properties/receipt"
-                },
-                "receiptCorrection": {
-                    "$ref": "receiptCorrection.schema.json#/properties/document/oneOf/0/properties/receiptCorrection"
-                },
-                "bso": {
-                    "$ref": "receipt.schema.json#/properties/document/oneOf/1/properties/bso"
-                },
-                "bsoCorrection": {
-                    "$ref": "receiptCorrection.schema.json#/properties/document/oneOf/1/properties/bsoCorrection"
-                },
-                "closeShift": {
-                    "$ref": "closeShift.schema.json#/properties/document/properties/closeShift"
-                },
-                "closeArchive": {
-                    "$ref": "closeArchive.schema.json#/properties/document/properties/closeArchive"
-                }
-            },
-            "oneOf": [
-                {
-                    "required": [
-                        "fiscalReport"
-                    ]
-                },
-                {
-                    "required": [
-                        "fiscalReportCorrection"
-                    ]
-                },
-                {
-                    "required": [
-                        "openShift"
-                    ]
-                },
-                {
-                    "required": [
-                        "currentStateReport"
-                    ]
-                },
-                {
-                    "required": [
-                        "receipt"
-                    ]
-                },
-                {
-                    "required": [
-                        "receiptCorrection"
-                    ]
-                },
-                {
-                    "required": [
-                        "bso"
-                    ]
-                },
-                {
-                    "required": [
-                        "bsoCorrection"
-                    ]
-                },
-                {
-                    "required": [
-                        "closeShift"
-                    ]
-                },
-                {
-                    "required": [
-                        "closeArchive"
-                    ]
-                }
-            ]
+        "fiscalReport": {
+            "$ref": "fiscalReport.schema.json#/properties/fiscalReport"
+        },
+        "fiscalReportCorrection": {
+            "$ref": "fiscalReportCorrection.schema.json#/properties/fiscalReportCorrection"
+        },
+        "openShift": {
+            "$ref": "openShift.schema.json#/properties/openShift"
+        },
+        "currentStateReport": {
+            "$ref": "currentStateReport.schema.json#/properties/currentStateReport"
+        },
+        "receipt": {
+            "$ref": "receipt.schema.json#/oneOf/0/properties/receipt"
+        },
+        "receiptCorrection": {
+            "$ref": "receiptCorrection.schema.json#/oneOf/0/properties/receiptCorrection"
+        },
+        "bso": {
+            "$ref": "receipt.schema.json#/oneOf/1/properties/bso"
+        },
+        "bsoCorrection": {
+            "$ref": "receiptCorrection.schema.json#/oneOf/1/properties/bsoCorrection"
+        },
+        "closeShift": {
+            "$ref": "closeShift.schema.json#/properties/closeShift"
+        },
+        "closeArchive": {
+            "$ref": "closeArchive.schema.json#/properties/closeArchive"
         }
     },
-    "required": [
-        "document"
+    "oneOf": [
+        {
+            "required": [
+                "fiscalReport"
+            ]
+        },
+        {
+            "required": [
+                "fiscalReportCorrection"
+            ]
+        },
+        {
+            "required": [
+                "openShift"
+            ]
+        },
+        {
+            "required": [
+                "currentStateReport"
+            ]
+        },
+        {
+            "required": [
+                "receipt"
+            ]
+        },
+        {
+            "required": [
+                "receiptCorrection"
+            ]
+        },
+        {
+            "required": [
+                "bso"
+            ]
+        },
+        {
+            "required": [
+                "bsoCorrection"
+            ]
+        },
+        {
+            "required": [
+                "closeShift"
+            ]
+        },
+        {
+            "required": [
+                "closeArchive"
+            ]
+        }
     ]
 }

@@ -3,124 +3,115 @@
     "type": "object",
     "description": "Документ полученый от ККТ",
     "properties": {
-        "document": {
+        "fiscalReportCorrection": {
             "type": "object",
-            "description": "Документ",
+            "description": "Отчет об изменении параметров регистрации",
             "properties": {
-                "fiscalReportCorrection": {
-                    "type": "object",
-                    "description": "Отчет об изменении параметров регистрации",
-                    "properties": {
-                        "code": {
-                            "type": "integer",
-                            "enum": [
-                                11
-                            ]
-                        },
-                        "user": {
-                            "$ref": "dictionary.schema.json#/definitions/user"
-                        },
-                        "userInn": {
-                            "$ref": "dictionary.schema.json#/definitions/userInn"
-                        },
-                        "taxationsType": {
-                            "$ref": "dictionary.schema.json#/definitions/taxationsType"
-                        },
-                        "dateTime": {
-                            "$ref": "dictionary.schema.json#/definitions/dateTime"
-                        },
-                        "kktRegId": {
-                            "$ref": "dictionary.schema.json#/definitions/kktRegId"
-                        },
-                        "offlineMode": {
-                            "$ref": "dictionary.schema.json#/definitions/offlineMode"
-                        },
-                        "bsoSign": {
-                            "$ref": "dictionary.schema.json#/definitions/bsoSign"
-                        },
-                        "serviceSign": {
-                            "$ref": "dictionary.schema.json#/definitions/serviceSign"
-                        },
-                        "encryptionSign": {
-                            "$ref": "dictionary.schema.json#/definitions/encryptionSign"
-                        },
-                        "autoMode": {
-                            "$ref": "dictionary.schema.json#/definitions/autoMode"
-                        },
-                        "machineNumber": {
-                            "$ref": "dictionary.schema.json#/definitions/machineNumber"
-                        },
-                        "internetSign": {
-                            "$ref": "dictionary.schema.json#/definitions/internetSign"
-                        },
-                        "fiscalDocumentNumber": {
-                            "$ref": "dictionary.schema.json#/definitions/fiscalDocumentNumber"
-                        },
-                        "fiscalDriveNumber": {
-                            "$ref": "dictionary.schema.json#/definitions/fiscalDriveNumber"
-                        },
-                        "operator": {
-                            "$ref": "dictionary.schema.json#/definitions/operator"
-                        },
-                        "retailPlaceAddress": {
-                            "$ref": "dictionary.schema.json#/definitions/retailPlaceAddress"
-                        },
-                        "ofdInn": {
-                            "$ref": "dictionary.schema.json#/definitions/ofdInn"
-                        },
-                        "kktNumber": {
-                            "$ref": "dictionary.schema.json#/definitions/kktNumber"
-                        },
-                        "correctionReasonCode": {
-                            "type": "array",
-                            "uniqueItems": false,
-                            "minItems": 1,
-                            "description": "причина перерегистрации",
-                            "items": {
-                                "type": "integer",
-                                "minimum": 0,
-                                "maximum": 255
-                            }
-                        },
-                        "fiscalSign": {
-                            "$ref": "dictionary.schema.json#/definitions/fiscalSign"
-                        },
-                        "properties": {
-                            "$ref": "dictionary.schema.json#/definitions/propertiesType"
-                        },
-                        "rawData": {
-                            "$ref": "dictionary.schema.json#/definitions/rawData"
-                        }
-                    },
-                    "required": [
-                        "code",
-                        "user",
-                        "userInn",
-                        "taxationType",
-                        "dateTime",
-                        "kktRegId",
-                        "offlineMode",
-                        "bsoSign",
-                        "serviceSign",
-                        "encryptionSign",
-                        "autoMode",
-                        "internetSign",
-                        "fiscalDocumentNumber",
-                        "fiscalDriveNumber",
-                        "operator",
-                        "ofdInn",
-                        "correctionReasonCode",
-                        "fiscalSign",
-                        "rawData"
+                "code": {
+                    "type": "integer",
+                    "enum": [
+                        11
                     ]
+                },
+                "user": {
+                    "$ref": "dictionary.schema.json#/definitions/user"
+                },
+                "userInn": {
+                    "$ref": "dictionary.schema.json#/definitions/userInn"
+                },
+                "taxationsType": {
+                    "$ref": "dictionary.schema.json#/definitions/taxationsType"
+                },
+                "dateTime": {
+                    "$ref": "dictionary.schema.json#/definitions/dateTime"
+                },
+                "kktRegId": {
+                    "$ref": "dictionary.schema.json#/definitions/kktRegId"
+                },
+                "offlineMode": {
+                    "$ref": "dictionary.schema.json#/definitions/offlineMode"
+                },
+                "bsoSign": {
+                    "$ref": "dictionary.schema.json#/definitions/bsoSign"
+                },
+                "serviceSign": {
+                    "$ref": "dictionary.schema.json#/definitions/serviceSign"
+                },
+                "encryptionSign": {
+                    "$ref": "dictionary.schema.json#/definitions/encryptionSign"
+                },
+                "autoMode": {
+                    "$ref": "dictionary.schema.json#/definitions/autoMode"
+                },
+                "machineNumber": {
+                    "$ref": "dictionary.schema.json#/definitions/machineNumber"
+                },
+                "internetSign": {
+                    "$ref": "dictionary.schema.json#/definitions/internetSign"
+                },
+                "fiscalDocumentNumber": {
+                    "$ref": "dictionary.schema.json#/definitions/fiscalDocumentNumber"
+                },
+                "fiscalDriveNumber": {
+                    "$ref": "dictionary.schema.json#/definitions/fiscalDriveNumber"
+                },
+                "operator": {
+                    "$ref": "dictionary.schema.json#/definitions/operator"
+                },
+                "retailPlaceAddress": {
+                    "$ref": "dictionary.schema.json#/definitions/retailPlaceAddress"
+                },
+                "ofdInn": {
+                    "$ref": "dictionary.schema.json#/definitions/ofdInn"
+                },
+                "kktNumber": {
+                    "$ref": "dictionary.schema.json#/definitions/kktNumber"
+                },
+                "correctionReasonCode": {
+                    "type": "array",
+                    "uniqueItems": false,
+                    "minItems": 1,
+                    "description": "причина перерегистрации",
+                    "items": {
+                        "type": "integer",
+                        "minimum": 0,
+                        "maximum": 255
+                    }
+                },
+                "fiscalSign": {
+                    "$ref": "dictionary.schema.json#/definitions/fiscalSign"
+                },
+                "properties": {
+                    "$ref": "dictionary.schema.json#/definitions/propertiesType"
+                },
+                "rawData": {
+                    "$ref": "dictionary.schema.json#/definitions/rawData"
                 }
             },
             "required": [
-                "fiscalReportCorrection"
+                "code",
+                "user",
+                "userInn",
+                "taxationType",
+                "dateTime",
+                "kktRegId",
+                "offlineMode",
+                "bsoSign",
+                "serviceSign",
+                "encryptionSign",
+                "autoMode",
+                "internetSign",
+                "fiscalDocumentNumber",
+                "fiscalDriveNumber",
+                "operator",
+                "ofdInn",
+                "correctionReasonCode",
+                "fiscalSign",
+                "rawData"
             ]
         }
     },
     "required": [
-        "document"
+        "fiscalReportCorrection"
     ]
 }

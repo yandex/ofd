@@ -828,7 +828,7 @@ class ProtocolPacker:
             del container_message['docName']
 
         container_message = cls.format_message_fields(container_message)
-        container_message = {'document': {stlv_doc.name: container_message}}
+        container_message = {stlv_doc.name: container_message}
 
         if not isinstance(container_message, dict):
             raise InvalidProtocolDocument()

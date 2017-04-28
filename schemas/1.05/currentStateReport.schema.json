@@ -3,102 +3,93 @@
     "type": "object",
     "description": "Документ полученый от ККТ",
     "properties": {
-        "document": {
+        "currentStateReport": {
             "type": "object",
-            "description": "Документ",
+            "description": "Отчёт о текущем состоянии расчетов",
             "properties": {
-                "currentStateReport": {
-                    "type": "object",
-                    "description": "Отчёт о текущем состоянии расчетов",
-                    "properties": {
-                        "fiscalDocumentFormatVer": {
-                            "$ref": "dictionary.schema.json#/definitions/fiscalDocumentFormatVer"
-                        },
-                        "retailPlace": {
-                            "$ref": "dictionary.schema.json#/definitions/retailPlace"
-                        },
-                        "retailPlaceAddress": {
-                            "$ref": "dictionary.schema.json#/definitions/retailPlaceAddress"
-                        },
-                        "fiscalDriveSumReports": {
-                            "$ref": "dictionary.schema.json#/definitions/fiscalDriveSumReports"
-                        },
-                        "notTransmittedDocumentsSumReports": {
-                            "$ref": "dictionary.schema.json#/definitions/fiscalDriveSumReports"
-                        },
-                        "code": {
-                            "type": "integer",
-                            "enum": [
-                                21
-                            ]
-                        },
-                        "userInn": {
-                            "$ref": "dictionary.schema.json#/definitions/userInn"
-                        },
-                        "dateTime": {
-                            "$ref": "dictionary.schema.json#/definitions/dateTime"
-                        },
-                        "shiftNumber": {
-                            "$ref": "dictionary.schema.json#/definitions/shiftNumber"
-                        },
-                        "offlineMode": {
-                            "$ref": "dictionary.schema.json#/definitions/offlineMode"
-                        },
-                        "notTransmittedDocumentNumber": {
-                            "type": "integer",
-                            "minimum": 0,
-                            "maximum": 4294967295,
-                            "description": "номер первого непереданного документа"
-                        },
-                        "notTransmittedDocumentsQuantity": {
-                            "$ref": "dictionary.schema.json#/definitions/notTransmittedDocumentsQuantity"
-                        },
-                        "notTransmittedDocumentsDateTime": {
-                            "$ref": "dictionary.schema.json#/definitions/notTransmittedDocumentsDateTime"
-                        },
-                        "kktRegId": {
-                            "$ref": "dictionary.schema.json#/definitions/kktRegId"
-                        },
-                        "fiscalDriveNumber": {
-                            "$ref": "dictionary.schema.json#/definitions/fiscalDriveNumber"
-                        },
-                        "fiscalDocumentNumber": {
-                            "$ref": "dictionary.schema.json#/definitions/fiscalDocumentNumber"
-                        },
-                        "fiscalSign": {
-                            "$ref": "dictionary.schema.json#/definitions/fiscalSign"
-                        },
-                        "properties": {
-                            "$ref": "dictionary.schema.json#/definitions/propertiesType"
-                        },
-                        "rawData": {
-                            "$ref": "dictionary.schema.json#/definitions/rawData"
-                        }
-                    },
-                    "required": [
-                        "fiscalDocumentFormatVer",
-
-                        "code",
-                        "userInn",
-                        "dateTime",
-                        "offlineMode",
-                        "notTransmittedDocumentNumber",
-                        "notTransmittedDocumentsQuantity",
-                        "notTransmittedDocumentsDateTime",
-                        "kktRegId",
-                        "fiscalDriveNumber",
-                        "fiscalDocumentNumber",
-                        "fiscalSign",
-                        "rawData"
+                "fiscalDocumentFormatVer": {
+                    "$ref": "dictionary.schema.json#/definitions/fiscalDocumentFormatVer"
+                },
+                "retailPlace": {
+                    "$ref": "dictionary.schema.json#/definitions/retailPlace"
+                },
+                "retailPlaceAddress": {
+                    "$ref": "dictionary.schema.json#/definitions/retailPlaceAddress"
+                },
+                "fiscalDriveSumReports": {
+                    "$ref": "dictionary.schema.json#/definitions/fiscalDriveSumReports"
+                },
+                "notTransmittedDocumentsSumReports": {
+                    "$ref": "dictionary.schema.json#/definitions/fiscalDriveSumReports"
+                },
+                "code": {
+                    "type": "integer",
+                    "enum": [
+                        21
                     ]
+                },
+                "userInn": {
+                    "$ref": "dictionary.schema.json#/definitions/userInn"
+                },
+                "dateTime": {
+                    "$ref": "dictionary.schema.json#/definitions/dateTime"
+                },
+                "shiftNumber": {
+                    "$ref": "dictionary.schema.json#/definitions/shiftNumber"
+                },
+                "offlineMode": {
+                    "$ref": "dictionary.schema.json#/definitions/offlineMode"
+                },
+                "notTransmittedDocumentNumber": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 4294967295,
+                    "description": "номер первого непереданного документа"
+                },
+                "notTransmittedDocumentsQuantity": {
+                    "$ref": "dictionary.schema.json#/definitions/notTransmittedDocumentsQuantity"
+                },
+                "notTransmittedDocumentsDateTime": {
+                    "$ref": "dictionary.schema.json#/definitions/notTransmittedDocumentsDateTime"
+                },
+                "kktRegId": {
+                    "$ref": "dictionary.schema.json#/definitions/kktRegId"
+                },
+                "fiscalDriveNumber": {
+                    "$ref": "dictionary.schema.json#/definitions/fiscalDriveNumber"
+                },
+                "fiscalDocumentNumber": {
+                    "$ref": "dictionary.schema.json#/definitions/fiscalDocumentNumber"
+                },
+                "fiscalSign": {
+                    "$ref": "dictionary.schema.json#/definitions/fiscalSign"
+                },
+                "properties": {
+                    "$ref": "dictionary.schema.json#/definitions/propertiesType"
+                },
+                "rawData": {
+                    "$ref": "dictionary.schema.json#/definitions/rawData"
                 }
             },
             "required": [
-                "currentStateReport"
+                "fiscalDocumentFormatVer",
+
+                "code",
+                "userInn",
+                "dateTime",
+                "offlineMode",
+                "notTransmittedDocumentNumber",
+                "notTransmittedDocumentsQuantity",
+                "notTransmittedDocumentsDateTime",
+                "kktRegId",
+                "fiscalDriveNumber",
+                "fiscalDocumentNumber",
+                "fiscalSign",
+                "rawData"
             ]
         }
     },
     "required": [
-        "document"
+        "currentStateReport"
     ]
 }

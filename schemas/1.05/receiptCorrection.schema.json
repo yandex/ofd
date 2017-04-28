@@ -129,11 +129,7 @@
     },
     "type": "object",
     "description": "Документ полученый от ККТ",
-    "properties": {
-        "document": {
-            "type": "object",
-            "description": "Документ",
-            "oneOf": [
+    "oneOf": [
                 {
                     "properties": {
                         "receiptCorrection": {
@@ -191,9 +187,4 @@
                     ]
                 }
             ]
-        }
-    },
-    "required": [
-        "document"
-    ]
 }
