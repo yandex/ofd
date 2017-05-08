@@ -17,10 +17,8 @@ doc = ofd.unpack_container_message(message, fiscal_sign)
 ## Упаковка json документа в бинарный формат
 ```python
 import ofd
-from ofd import DOCS_BY_NAME
-
 doc = {'receipt': { .. }}  // фискальный документ в json формате
-message = ofd.pack_json(doc, DOCS_BY_NAME) //получаем контейнер ФФД в бинарном формате
+message = ofd.pack_json(doc, ofd.DOCS_BY_NAME) //получаем контейнер ФФД в бинарном формате
 ```
 
 
