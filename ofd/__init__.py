@@ -23,6 +23,6 @@ __all__ = [
     'Byte',
     'FrameHeader',
     'FVLN', 'SessionHeader', 'DOCUMENTS', 'String', 'STLV', 'U32', 'UnixTime', 'VLN',
-    'SIGNATURE', 'pack_json',
+    'SIGNATURE', 'pack_json', 'unpack_container_message',
     '__version__'
 ]
