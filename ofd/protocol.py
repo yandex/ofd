@@ -371,8 +371,8 @@ class FrameHeader(object):
             raise ValueError('data size must be 32')
         pack = cls.STRUCT.unpack(data)
 
-        # if pack[cls.MSGTYPE_ID] != cls.MSGTYPE:
-        #     raise ValueError('invalid message type')
+        if pack[cls.MSGTYPE_ID] != cls.MSGTYPE:
+            raise ValueError('invalid message type')
         if pack[cls.VERSION_ID] != cls.VERSION:
             raise ValueError('invalid protocol version')
 
