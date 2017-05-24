@@ -17,7 +17,63 @@
 
 import asyncio
 import json
-from ofd.protocol import SessionHeader, FrameHeader, unpack_container_message
+import time
+from ofd.protocol import SessionHeader, FrameHeader, unpack_container_message, pack_json, DOCS_BY_NAME, DocCodes, \
+    String
+
+
+async def unpack_incoming_message(rd):
+    """
+    Прочитать входящий поток бинарных данных и распаковать их в json документ
+    """
+    session_raw = await rd.readexactly(30)
+    session = SessionHeader.unpack_from(session_raw)
+    print(session)
+    container_raw = await rd.readexactly(session.length)
+    header_raw, message_raw = container_raw[:FrameHeader.STRUCT.size], container_raw[FrameHeader.STRUCT.size:]
+    header = FrameHeader.unpack_from(header_raw)
+    print(header)
+    return unpack_container_message(message_raw, b'0')[0], session, header
+
+
+def create_response(doc, in_session, in_header):
+    """
+    Запаковать в протокол "подтверждение оператора" от ОФД к кассе
+    :param doc: полученный документ
+    :param in_header: заголовок контейнера входящего сообщения
+    :param in_session: заголовок сессии входящего сообщения
+    :return: 
+    """
+    doc_body = doc[next(iter(doc))]  # получаем тело документа
+    message = {
+        'operatorAck': {
+            'ofdInn': '7704358518',  # ИНН Яндекс.ОФД
+            'fiscalDriveNumber': doc_body.get('fiscalDriveNumber'),
+            'fiscalDocumentNumber': doc_body.get('fiscalDocumentNumber'),
+            'dateTime': int(time.time()),
+            'messageToFn': {'ofdResponseCode': 0}  # код ответа 0 при успешном получении документа
+            # Теги ФПО и ФПП не указаны, т.к. должны быть добавлены реальным шифровальным комплексом
+        }
+    }
+    message_raw = pack_json(message, docs=DOCS_BY_NAME)
+
+    # в реальных ОФД FrameHeader формируется автоматически шифровальной машиной
+    out_header = FrameHeader(length=FrameHeader.STRUCT.size + len(message_raw),
+                             crc=0,
+                             doctype=DocCodes.OPERATOR_ACK,
+                             devnum=in_header.devnum,
+                             docnum=String.pack(str(doc_body.get('fiscalDocumentNumber'))),
+                             extra1=in_header.extra1,
+                             extra2=String.pack('0'.rjust(12)))
+
+    out_header.recalculate_crc(message_raw)
+    container_raw = out_header.pack() + message_raw
+
+    out_session = SessionHeader(pva=in_session.pva, fs_id=in_session.fs_id, length=len(container_raw), crc=0,
+                                flags=0b0000000000010100)
+
+    return out_session.pack() + container_raw
+
 
 async def handle_connection(rd, wr):
     """
@@ -26,19 +82,15 @@ async def handle_connection(rd, wr):
     :param wr: writable stream.
     """
     try:
-        session_raw = await rd.readexactly(30)
-        session = SessionHeader.unpack_from(session_raw)
-        print(session)
-
-        container_raw = await rd.readexactly(session.length)
-        header_raw, message_raw = container_raw[:FrameHeader.STRUCT.size], container_raw[FrameHeader.STRUCT.size:]
-        header = FrameHeader.unpack_from(header_raw)
-        print(header)
-
-        document = unpack_container_message(message_raw, b'0')[0]
-        print(json.dumps(document, ensure_ascii=False, indent=4))
+        doc, session, header = await unpack_incoming_message(rd)
+        print(json.dumps(doc, ensure_ascii=False, indent=4))
+        response = create_response(doc, in_session=session, in_header=header)
+        print('raw response', response)
+        wr.write(response)
     finally:
         wr.write_eof()
+        wr.drain()
+
 
 if __name__ == '__main__':
     host = None
