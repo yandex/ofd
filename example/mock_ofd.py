@@ -18,6 +18,7 @@
 import asyncio
 import json
 import time
+import argparse
 from ofd.protocol import SessionHeader, FrameHeader, unpack_container_message, pack_json, DOCS_BY_NAME, DocCodes, \
     String
 
@@ -26,7 +27,7 @@ async def unpack_incoming_message(rd):
     """
     Прочитать входящий поток бинарных данных и распаковать их в json документ
     """
-    session_raw = await rd.readexactly(30)
+    session_raw = await rd.readexactly(SessionHeader.STRUCT.size)
     session = SessionHeader.unpack_from(session_raw)
     print(session)
     container_raw = await rd.readexactly(session.length)
@@ -77,7 +78,10 @@ def create_response(doc, in_session, in_header):
 
 async def handle_connection(rd, wr):
     """
-    Called each time new connection is accepted.
+    Пример использования протокола для эмуляции работы ОФД. Сервер принимает входящее сообщение и распаковывает его,
+    выводя значения в stdout. В ответ сервер формирует сообщение "подтверждение оператора" и передает его обратно кассе.
+    Эмулятор работает без использования шифровальный машины, поэтому считаем, что сообщение приходит в ОФД 
+    в незашифрованном виде.
     :param rd: readable stream.
     :param wr: writable stream.
     """
@@ -93,13 +97,16 @@ async def handle_connection(rd, wr):
 
 
 if __name__ == '__main__':
-    host = None
-    port = 12345
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--host', default=None, help='хост для запуска сервера')
+    parser.add_argument('--port', default=12345, type=int, help='порт для запуска сервера')
+    argv = parser.parse_args()
+    host = None if argv.host in ['::', 'localhost'] else argv.host
 
     loop = asyncio.get_event_loop()
-    server = asyncio.start_server(handle_connection, host=host, port=port, loop=loop)
+    server = asyncio.start_server(handle_connection, host=host, port=argv.port, loop=loop)
     loop.run_until_complete(server)
-    print('mock ofd server has been started at port', port)
+    print('mock ofd server has been started at port', argv.port)
 
     try:
         loop.run_forever()
