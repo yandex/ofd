@@ -28,6 +28,10 @@ setup(
         'crcmod'
     ],
     test_suite='tests',
+    setup_requires=[
+        'pytest-runner',
+    ],
+    tests_require=['pytest', 'pytest_asyncio', 'asynctest'],
     zip_safe=True,
     classifiers=[
         'Programming Language :: Python',

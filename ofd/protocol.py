@@ -478,7 +478,7 @@ DOCUMENTS = {
     DocCodes.BSO_CORRECTION: STLV(u'bsoCorrection', u'Бланк строгой отчетности коррекции', maxlen=32768),
     DocCodes.CLOSE_SHIFT: STLV(u'closeShift', u'Отчёт о закрытии смены', maxlen=441),
     DocCodes.CLOSE_ARCHIVE: STLV(u'closeArchive', u'Отчёт о закрытии фискального накопителя', maxlen=432),
-    DocCodes.OPERATOR_ACK: STLV(u'operatorAck(?)', u'подтверждение оператора', maxlen=512),
+    DocCodes.OPERATOR_ACK: STLV(u'operatorAck', u'подтверждение оператора', maxlen=512),
 
     1000: String(u'docName', u'наименование документа', maxlen=256),  # есть в протоколе, но не отправляется в ФНС
     1001: Byte(u'autoMode', u'автоматический режим'),
