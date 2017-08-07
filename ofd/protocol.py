@@ -13,7 +13,7 @@
 #    distributed under the License is distributed on an "AS IS" BASIS,
 #    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 #    See the License for the specific language governing permissions and
-#
+
 
 import array
 import json
@@ -24,14 +24,17 @@ import decimal
 import struct
 import jsonschema
 import base64
-from jsonschema import ValidationError
-
+import datetime
+import re
+from jsonschema import ValidationError, Draft4Validator
 
 VERSION = (1, 1, 0, 'ATOL-3')
 
 SIGNATURE = array.array('B', [42, 8, 65, 10]).tostring()
 
 FLK_ERROR = 14  # Ошибка форматно-логического контроля при обработке документа
+
+JSON_VERSION = 13  # version of json format (OFD to FNS protocol) which is used to unpack document
 
 
 class ProtocolError(RuntimeError):
@@ -63,6 +66,7 @@ class Byte(object):
         self.cardinality = cardinality
         self.maxlen = self.STRUCT.size
         self.parents = parents
+        self.ty = None
 
     def pack(self, data):
         """
@@ -84,6 +88,9 @@ class Byte(object):
         return self.STRUCT.pack(data)
 
     def unpack(self, data):
+        # for zero-length tag value
+        if len(data) == 0:
+            return 0
         return self.STRUCT.unpack(data)[0]
 
 
@@ -94,6 +101,7 @@ class U32(object):
         self.maxlen = 4,
         self.cardinality = cardinality,
         self.parents = parents
+        self.ty = None
 
     @staticmethod
     def pack(data):
@@ -101,15 +109,21 @@ class U32(object):
 
     @staticmethod
     def unpack(data):
+        # for zero-length tag value
+        if len(data) == 0:
+            return 0
         return struct.unpack('<I', data)[0]
 
 
 class String(object):
-    def __init__(self, name, desc, maxlen, parents=None):
+    def __init__(self, name, desc, maxlen, cardinality=None, parents=None, strip=False):
         self.name = name
         self.desc = desc
         self.maxlen = maxlen
         self.parents = parents
+        self.strip = strip
+        self.cardinality = cardinality
+        self.ty = None
 
     @staticmethod
     def pack(value):
@@ -119,8 +133,13 @@ class String(object):
         if len(data) == 0:
             return ''
         if len(data) > self.maxlen:
-            raise ValueError('String actual size is greater than maximum')
-        return struct.unpack('{}s'.format(len(data)), data)[0].decode('cp866')
+            raise ValueError('String tag {ty} actual size {actual} is greater than maximum {max}. Data: {data}'
+                             .format(ty=self.ty, actual=len(data), max=self.maxlen, data=data))
+
+        result = struct.unpack('{}s'.format(len(data)), data)[0].decode('cp866')
+        if self.strip:
+            result = result.strip()
+        return result
 
 
 class ByteArray(object):
@@ -129,6 +148,7 @@ class ByteArray(object):
         self.desc = desc
         self.maxlen = maxlen
         self.parents = parents
+        self.ty = None
 
     @staticmethod
     def pack(value):
@@ -148,6 +168,7 @@ class UnixTime(object):
         self.desc = desc
         self.maxlen = 4
         self.parents = parents
+        self.ty = None
 
     @staticmethod
     def pack(time):
@@ -164,6 +185,7 @@ class VLN(object):
         self.desc = desc
         self.maxlen = maxlen
         self.parents = parents
+        self.ty = None
 
     def pack(self, data):
         packed = struct.pack('<Q', data)
@@ -192,6 +214,7 @@ class FVLN(object):
         self.desc = desc
         self.maxlen = maxlen
         self.parents = parents
+        self.ty = None
 
     def pack(self, data):
         str_data = str(data)
@@ -232,6 +255,7 @@ class STLV(object):
         self.maxlen = maxlen
         self.cardinality = cardinality
         self.parents = parents
+        self.ty = None
 
     @staticmethod
     def pack(data):
@@ -245,7 +269,7 @@ class STLV(object):
 
         while len(data) > 0:
             ty, length = struct.unpack('<HH', data[:4])
-            doc = DOCUMENTS[ty]
+            doc = self._select_tag_by_parent(ty)
             value = doc.unpack(data[4:4 + length])
 
             if hasattr(doc, 'cardinality'):
@@ -261,6 +285,24 @@ class STLV(object):
 
         return result
 
+    def _select_tag_by_parent(self, ty):
+        """
+        Найти соответствие для тега по его номеру. Если одному номеру соответствует несколько тегов, то
+        выбираем нужный тег в зависимости от указанных для него номеров родительских тегов
+        :param ty: номер тега, который нужно расшифровать
+        :return: объект с описанием тега и правилами его расшифровки
+        """
+        docs = DOCUMENTS[ty]
+        if not isinstance(docs, list):
+            return docs
+
+        for d in docs:
+            if d.parents and self.ty in d.parents:
+                return d
+
+        # если соответствие не найдено, то кидаем ошибку - это лучше, чем расшифровать в неправильный тег
+        raise ProtocolError('Cant select correct json for {} with parent {}'.format(ty, self.ty))
+
 
 class SessionHeader(object):
     MAGIC_ID, PVERS_ID, PVERA_ID = range(3)
@@ -268,9 +310,24 @@ class SessionHeader(object):
     PVERS, = struct.unpack('<H', bytearray.fromhex('81a2'))
     PVERA = {
         struct.unpack('<H', bytearray.fromhex('0001'))[0],
-        struct.unpack('<H', bytearray.fromhex('0002'))[0]
+        struct.unpack('<H', bytearray.fromhex('0002'))[0],
+        struct.unpack('<H', bytearray.fromhex('0100'))[0],
+        struct.unpack('<H', bytearray.fromhex('0105'))[0],
+        struct.unpack('<H', bytearray.fromhex('0110'))[0]
     }
     STRUCT = struct.Struct('<IHH16sHHH')
+    MAX_LEN = 32 * 1024  # максимальная длина контейнера - 32кб
+    # flags 010100:
+    # 01 - client expects response to the message
+    # 0 - reserved field, always 0
+    # 01 - message contains container body
+    # 00 - CRC code is not calculated
+    SESSION_FLAGS = 0b0000000000010100
+
+    # пустые значения флагов
+    EMPTY_FLAGS = 0b0000000000000000
+
+    INCLUDE_CONTAINER_FLAG = 0b0100  # флаг указывает, что сообщение содержит контейнер
 
     def __init__(self, pva, fs_id, length, flags, crc):
         self.pva = pva
@@ -284,12 +341,17 @@ class SessionHeader(object):
         return self.STRUCT.pack(
             self.MAGIC,
             self.PVERS,
-            struct.unpack('<H', bytearray.fromhex('0001'))[0],
+            self.pva,
             self.fs_id,
             self.length,
             self.flags,
             self.crc
         )
+
+    @property
+    def pva_hex(self):
+        """Get hex string of application protocol version"""
+        return struct.pack('<H', self.pva).hex()
 
     @classmethod
     def unpack_from(cls, data):
@@ -371,8 +433,8 @@ class FrameHeader(object):
             raise ValueError('data size must be 32')
         pack = cls.STRUCT.unpack(data)
 
-        if pack[cls.MSGTYPE_ID] != cls.MSGTYPE:
-            raise ValueError('invalid message type')
+        # if pack[cls.MSGTYPE_ID] != cls.MSGTYPE:
+        #     raise ValueError('invalid message type')
         if pack[cls.VERSION_ID] != cls.VERSION:
             raise ValueError('invalid protocol version')
 
@@ -412,8 +474,8 @@ class FrameHeader(object):
             raise ValueError('data size must be 28')
         pack = cls.STRUCT_TINY.unpack(data)
 
-        # if pack[cls.MSGTYPE_ID - 2] != cls.MSGTYPE:
-        #     raise ValueError('invalid message type')
+        if pack[cls.MSGTYPE_ID - 2] != cls.MSGTYPE:
+             raise ValueError('invalid message type')
         if pack[cls.VERSION_ID - 2] != cls.VERSION:
             raise ValueError('invalid protocol version')
 
@@ -469,7 +531,8 @@ class DocCodes:
 # англоязычные name могут повторяться в тегах, русскоязычный description - уникальный для каждого тега
 DOCUMENTS = {
     DocCodes.FISCAL_REPORT: STLV(u'fiscalReport', u'Отчёт о фискализации', maxlen=658),
-    DocCodes.FISCAL_REPORT_CORRECTION: STLV(u'fiscalReportCorrection', u'Отчёт об изменении параметров регистрации', maxlen=658),
+    DocCodes.FISCAL_REPORT_CORRECTION: STLV(u'fiscalReportCorrection', u'Отчёт об изменении параметров регистрации',
+                                            maxlen=658),
     DocCodes.OPEN_SHIFT: STLV(u'openShift', u'Отчёт об открытии смены', maxlen=440),
     DocCodes.CURRENT_STATE_REPORT: STLV(u'currentStateReport', u'Отчёт о текущем состоянии расчетов', maxlen=32768),
     DocCodes.RECEIPT: STLV(u'receipt', u'Кассовый чек', maxlen=32768),
@@ -485,23 +548,23 @@ DOCUMENTS = {
     1002: Byte(u'offlineMode', u'автономный режим'),
     1003: String(u'<unknown-1003>', u'адрес банковского агента', maxlen=256),
     1004: String(u'<unknown-1004>', u'адрес банковского субагента', maxlen=256),
-    1005: String(u'operatorAddress', u'адрес оператора по переводу денежных средств', maxlen=256),
+    1005: [String(u'operatorTransferAddress', u'адрес оператора по переводу', maxlen=256, parents=[3, 4]),
+           String(u'paymentProviderAddress', u'адрес оператора по переводу', maxlen=256, parents=[1223])],
     1006: String(u'<unknown-1006>', u'адрес платежного агента', maxlen=256),
     1007: String(u'<unknown-1007>', u'адрес платежного субагента', maxlen=256),
-    1008: String(u'buyerAddress', u'адрес покупателя', maxlen=64),
-    1009: String(u'retailPlaceAddress', u'адрес (место) расчетов', maxlen=256),
-    1010: VLN(u'bankAgentRemuneration', u'Размер вознаграждения банковского агента (субагента)'),
-    1011: VLN(u'paymentAgentRemuneration', u'Размер вознаграждения платежного агента (субагента)'),
+    1008: String(u'buyerPhoneOrAddress', u'адрес покупателя', maxlen=64),
+    1009: String(u'retailAddress', u'адрес (место) расчетов', maxlen=256),
+    1010: VLN(u'paymentAgentRemuneration', u'Размер вознаграждения банковского агента (субагента)'),
+    1011: VLN(u'paymentAgentRemuneration-del', u'Размер вознаграждения платежного агента (субагента)'),
     1012: UnixTime(u'dateTime', u'дата, время'),
     1013: String(u'kktNumber', u'Заводской номер ККТ', maxlen=20),
     1014: String(u'<unknown-1014>', u'значение типа строка', maxlen=64),
     1015: U32(u'<unknown-1015>', u'значение типа целое'),
-
-    # ToDo: переименовать в operatorTransferInn при введении новой версии протокола
-    1016: String(u'operatorInn', u'ИНН оператора по переводу денежных средств', maxlen=12, parents=[3, 4]),
-
-    1017: String(u'ofdInn', u'ИНН ОФД', maxlen=12),
-    1018: String(u'userInn', u'ИНН пользователя', maxlen=12),
+    1016: [String(u'operatorTransferInn', u'ИНН оператора по переводу денежных средств', maxlen=12, parents=[3, 4],
+                  strip=True),
+           String(u'paymentProviderInn', u'ИНН оператора перевода', maxlen=12, parents=[1223], strip=True)],
+    1017: String(u'ofdInn', u'ИНН ОФД', maxlen=12, strip=True),
+    1018: String(u'userInn', u'ИНН пользователя', maxlen=12, strip=True),
     1019: String(u'<unknown-1019>', u'Информационное cообщение', maxlen=64),
     1020: VLN(u'totalSum', u'ИТОГ', parents=[3, 31, 4, 41]),
     1021: String(u'operator', u'Кассир', maxlen=64),
@@ -509,11 +572,12 @@ DOCUMENTS = {
     1023: FVLN(u'quantity', u'Количество', maxlen=8),
     1024: String(u'<unknown-1024>', u'Наименование банковского агента', maxlen=64),
     1025: String(u'<unknown-1025>', u'Наименование банковского субагента', maxlen=64),
-    1026: String(u'operatorName', u'Наименование оператора по переводу денежных средств', 64),
+    1026: [String(u'operatorTransferName', u'Наименование оператора по переводу денежных средств', 64, parents=[3, 4]),
+           String(u'paymentProviderName', u'Наименование оператора по переводу денежных средств', 64, parents=[1223])],
     1027: String(u'<unknown-1027>', u'Наименование платежного агента', maxlen=64),
     1028: String(u'<unknown-1028>', u'Наименование платежного субагента', maxlen=64),
     1029: String(u'<unknown-1029>', u'наименование реквизита', maxlen=64),
-    1030: String(u'name', u'Наименование товара', maxlen=64),
+    1030: String(u'name', u'Наименование товара', maxlen=128),
     1031: VLN(u'cashTotalSum', u'Наличными'),
     1032: STLV(u'<unknown-1032>', u'Налог', maxlen=33),
     1033: STLV(u'<unknown-1033>', u'Налоги', maxlen=33),
@@ -527,9 +591,10 @@ DOCUMENTS = {
     1041: String(u'fiscalDriveNumber', desc=u'заводской номер фискального накопителя', maxlen=16),
     1042: U32(u'requestNumber', u'номер чека за смену'),
     1043: VLN(u'sum', u'Общая стоимость позиции с учетом скидок и наценок'),
-    1044: String(u'bankAgentOperation', u'Операция банковского агента', maxlen=24),
+    1044: [String(u'paymentAgentOperation', u'Операция банковского агента', maxlen=24, parents=[3, 4]),
+           String(u'agentOperation', u'Операция банковского агента', maxlen=24, parents=[1223])],
     1045: String(u'bankSubagentOperation', u'операция банковского субагента', maxlen=24),
-    1046: String(u'ofdName', u'ОФД', maxlen=64),
+    1046: String(u'ofdName', u'ОФД', maxlen=256),
     1047: STLV(u'<unknown-1047>', u'параметр настройки', maxlen=144),
     1048: String(u'user', u'наименование пользователя', maxlen=256),
     1049: String(u'<unknown-1049>', u'Почтовый индекс', maxlen=6),
@@ -543,22 +608,25 @@ DOCUMENTS = {
     1057: Byte(u'paymentAgentType', u'Применение платежными агентами (субагентами)'),
     1058: Byte(u'<unknown-1058>', u'Применение банковскими агентами (субагентами)'),
     1059: STLV(u'items', u'наименование товара (реквизиты)', 328, '*'),
-    1060: String(u'<unknown-1060>', u'Сайт налогового органа', maxlen=64),
-    1061: String(u'<unknown-1061>', u'Сайт ОФД', maxlen=64),
+    1060: String(u'fnsSite', u'Сайт налогового органа', maxlen=64),  # our name
+    1061: String(u'ofdSite', u'Сайт ОФД', maxlen=64),  # our name
     1062: Byte(u'taxationType', u'системы налогообложения', parents=[1, 11]),
     1063: FVLN(u'discount', u'Скидка (ставка)', 8),
     1064: VLN(u'discountSum', u'Скидка (сумма)'),
     1065: String(u'<unknown-1065>', u'Сокращенное наименование налога', maxlen=10),
     1066: String(u'<unknown-1066>', u'Сообщение', maxlen=256),
     1067: STLV(u'<unknown-1067>', u'Сообщение оператора для ККТ', maxlen=216),
-    1068: STLV(u'messageToFn', u'сообщение оператора для ФН', maxlen=169),   # name выбрано самостоятельно
+    1068: STLV(u'messageToFn', u'сообщение оператора для ФН', maxlen=169),  # name выбрано самостоятельно
     1069: STLV(u'<unknown-1069>', u'Сообщение оператору', 328, '*'),
     1070: FVLN(u'<unknown-1070>', u'Ставка налога', maxlen=5),
     1071: STLV(u'stornoItems', u'сторно товара (реквизиты)', 328, '*'),
     1072: VLN(u'<unknown-1072>', u'Сумма налога', maxlen=8),
-    1073: String(u'bankAgentPhone', u'Телефон банковского агента', maxlen=19),
-    1074: String(u'paymentAgentPhone', u'Телефон платежного агента', maxlen=19),
-    1075: String(u'operatorPhoneToTransfer', u'Телефон оператора по переводу денежных средств', maxlen=19),
+    1073: String(u'paymentAgentPhone', u'Телефон банковского агента', maxlen=19, cardinality='*'),
+    1074: [String(u'operatorToReceivePhone', u'Телефон платежного агента', maxlen=19, cardinality='*', parents=[3, 4]),
+           String(u'paymentProviderPhone', u'Телефон платежного агента', maxlen=19, cardinality='*', parents=[1223])],
+    1075: [String(u'operatorPhoneToTransfer', u'Телефон оператора по переводу денежных средств', 19, cardinality='*',
+                  parents=[3, 4]),
+           String(u'agentPhone', u'Телефон оператора перевода', 19, cardinality='*', parents=[1223])],
     1076: String(u'type', u'Тип сообщения', maxlen=64),
     1077: VLN(u'fiscalSign', u'фискальный признак документа', maxlen=6),
     1078: ByteArray(u'<unknown-1078>', u'фискальный признак оператора', maxlen=18),
@@ -567,10 +635,10 @@ DOCUMENTS = {
     1081: VLN(u'ecashTotalSum', u'форма расчета – электронными'),
     1082: String(u'bankSubagentPhone', u'телефон банковского субагента', maxlen=19),
     1083: String(u'paymentSubagentPhone', u'телефон платежного субагента', maxlen=19),
-    1084: STLV(u'properties', u'дополнительный реквизит', 328, '*'),
-    1085: String(u'key', u'наименование дополнительного реквизита', maxlen=64),
-    1086: String(u'value', u'значение дополнительного реквизита', maxlen=256),
-    # 1087: Часть тегов в описании протокола пропущены или исключены как неактуальные
+    1084: STLV(u'propertiesUser', u'дополнительный реквизит', 328),
+    1085: String(u'propertyName', u'наименование дополнительного реквизита', maxlen=64),
+    1086: String(u'propertyValue', u'значение дополнительного реквизита', maxlen=256),
+    # 1087: u'Итог смены',
     # 1088:
     # 1089:
     # 1090:
@@ -600,7 +668,7 @@ DOCUMENTS = {
     1114: String(u'markupName', u'наименование наценки', 64),
     1115: String(u'addressToCheckFiscalSign', u'адрес сайта для проверки ФП', 256),
     1116: U32(u'notTransmittedDocumentNumber', u'номер первого непереданного документа'),
-    1117: String(u'senderAddress', u'адрес отправителя', 64),
+    1117: String(u'sellerAddress', u'адрес электронной почты отправителя чека', 64),
     1118: U32(u'receiptsQuantity', u'количество кассовых чеков за смену'),
     1119: String(u'operatorPhoneToReceive', u'телефон оператора по приему платежей', 19),
     # 1120:
@@ -609,7 +677,7 @@ DOCUMENTS = {
     # 1123:
     # 1124:
     # 1125:
-    1126: Byte(u'loterySign', u'признак проведения лотереи'),
+    1126: Byte(u'lotterySign', u'признак проведения лотереи'),
     1129: STLV(u'sellOper', u'счетчики операций "приход"', 116),
     1130: STLV(u'sellReturnOper', u'счетчики операций "возврат прихода"', 116),
     1131: STLV(u'buyOper', u'счетчики операций "расход"', 116),
@@ -650,27 +718,28 @@ DOCUMENTS = {
     1187: String(u'retailPlace', u'место расчетов', 256),
     1188: String(u'kktVersion', u'версия ККТ', 8),
     1189: Byte(u'documentKktVersion', u'версия ФФД ККТ'),
-    1190: Byte(u'documentFnVersion', u'версия ФФД ФН'),
-    1191: String(u'propertiesString', u'дополнительный реквизит предмета расчета', 64),
+    1190: Byte(u'documentFdVersion', u'версия ФФД ФН'),
+    1191: [String(u'propertiesString', u'дополнительный реквизит предмета расчета', 256, parents=[3, 4]),
+           String(u'propertiesItem', u'дополнительный реквизит предмета расчета', 256, parents=[1059, 1071])],
     1192: String(u'propertiesData', u'дополнительный реквизит чека (БСО)', 16),
-    1193: Byte(u'azartSign', u'признак проведения азартных игр'),
+    1193: Byte(u'gamblingSign', u'признак проведения азартных игр'),
     1194: STLV(u'shiftSumReports', u'счетчики итогов смены', 704),
-    1195: String(u'sellerAddress', u'адрес электронной почты отправителя чека', 64),
+    1195: String(u'sellerAddress-del', u'адрес электронной почты отправителя чека', 64),
     1196: String(u'1196', u'QR-код', 10000),
     1197: String(u'unit', u'единица измерения предмета расчета', 16),
     1198: VLN(u'unitNds', u'размер НДС за единицу предмета расчета'),
     1199: Byte(u'nds', u'ставка НДС'),
     1200: VLN(u'ndsSum', u'сумма НДС за предмет расчета'),
     1201: VLN(u'totalSum', u'общая сумма расчетов', parents=[1129, 1130, 1131, 1132]),
-    1203: String(u'operatorInn', u'ИНН кассира', 12, parents=[1, 11, 2, 3, 4, 31, 41, 5, 6]),
+    1203: String(u'operatorInn', u'ИНН кассира', 12, parents=[1, 11, 2, 3, 4, 31, 41, 5, 6], strip=True),
     1205: U32(u'correctionKktReasonCode', u'коды причин изменения сведений о ККТ', cardinality='+'),
     1206: Byte(u'operatorMessage', u'сообщение оператора'),
     1207: Byte(u'exciseDutyProductSign', u'продажа подакцизного товара'),
     1208: String(u'1208', u'сайт чеков', 256),
     1209: Byte(u'fiscalDocumentFormatVer', u'версия ФФД'),
     1210: Byte(u'1210', u'признаки режимов работы ККТ'),
-    1212: U32(u'productType', u'признак предмета расчета'),
-    1213: U32(u'fnKeyResource', u'ресурс ключей ФП'),
+    1212: Byte(u'productType', u'признак предмета расчета'),
+    1213: U32(u'fdKeyResource', u'ресурс ключей ФП'),
     1214: Byte(u'paymentType', u'признак способа расчета'),
     1215: VLN(u'prepaidSum', u'сумма предоплаты (зачет аванса)', parents=[3, 31, 41, 41]),
     1216: VLN(u'creditSum', u'сумма постоплаты (кредита)', parents=[3, 31, 4, 41]),
@@ -689,33 +758,54 @@ DOCUMENTS = {
     1226: String(u'providerInn', u'ИНН поставщика', maxlen=12)
 }
 
-DOCS_BY_DESC = dict((doc.desc, (ty, doc)) for ty, doc in DOCUMENTS.items())
 VERSIONS = {1: '1.0', 2: '1.05', 3: '1.1'}
 
 
-def group_by_name(docs):
+def _group_tags(docs, group_by):
     """
-    Группируем теги по name - т.к. поле неуникальное, то возможны коллизиции. В этом случае в значение пишем list
-    всех соответствующих значений
+    Группируем теги по указанному аттрибуту - т.к. поле неуникальное, то возможны коллизиции. В этом случае в значение
+    пишем list всех соответствующих значений
     :param docs: исходный dict tag -> object
-    :return: dict name -> object or list
+    :param group_by: наименование аттрибута, по которому происходит группировка
+    :return: dict [group_by] -> object or list
     """
     result = {}
     for ty, doc in docs.items():
-        k = doc.name
-        v = (ty, doc)
-
-        if k not in result:
-            result[k] = v
-        elif isinstance(v, list):
-            result[k].append(v)
+        if isinstance(doc, list):
+            tags = doc
         else:
-            result[k] = [result[k], v]
+            tags = [doc]
+
+        for t in tags:
+            v = (ty, t)
+            k = getattr(t, group_by)
+
+            if k not in result:
+                result[k] = v
+            elif isinstance(v, list):
+                result[k].append(v)
+            else:
+                result[k] = [result[k], v]
 
     return result
 
 
-DOCS_BY_NAME = group_by_name(DOCUMENTS)
+def _update_tag_value(doc):
+    """
+    В каждый объект внутри DOCUMENTS записать номера соответствующего ему тега
+    Выполняется при инициализации
+    """
+    for ty, val in doc.items():
+        if isinstance(val, list):
+            for i in val:
+                i.ty = ty
+        else:
+            val.ty = ty
+
+
+DOCS_BY_DESC = _group_tags(DOCUMENTS, group_by='desc')
+DOCS_BY_NAME = _group_tags(DOCUMENTS, group_by='name')
+_update_tag_value(DOCUMENTS)  # инициализация тегов
 
 
 class NullValidator(object):
@@ -724,26 +814,30 @@ class NullValidator(object):
 
 
 class DocumentValidator(object):
-    def __init__(self, versions, path, skip_unknown=False):
+    def __init__(self, versions, path, skip_unknown=False, min_date='2016.09.01', future_hours=24):
         """
         Класс для валидации документов от ККТ по json-схеме.
         :param versions: поддерживаемые версии протокола, например ['1.0', '1.05'].
         :param path: путь до директории, которая содержит все директории со схемами, разбитым по версиям,
         например, схемы для протокола 1.0 должны лежать в <path>/1.0/
-        :param skip_unknow: если номер версии отличается от поддерживаемых пропускать валидацию
+        :param skip_unknown: если номер версии отличается от поддерживаемых пропускать валидацию
         """
-        self._schemas = {}
+        self._validators = {}
         self._skip_unknown = skip_unknown
         schema_dir = os.path.expanduser(path)
         schema_dir = os.path.abspath(schema_dir)
 
+        self.min_date = datetime.datetime.strptime(min_date, '%Y.%m.%d') if min_date else None
+        self.future_hours = future_hours
+
         for version in versions:
             full_path = os.path.join(schema_dir, version, 'document.schema.json')
             with open(full_path, encoding='utf-8') as fh:
-                self._schemas[version] = {
-                    'root': json.loads(fh.read()),
-                    'resolver': jsonschema.RefResolver('file://' + full_path, None)
-                }
+                schema = json.loads(fh.read())
+                resolver = jsonschema.RefResolver('file://' + full_path, None)
+                validator = Draft4Validator(schema=schema, resolver=resolver)
+                validator.check_schema(schema)  # проверяем, что сама схема - валидная
+                self._validators[version] = validator
 
     def validate(self, doc: dict, version: str):
         """
@@ -752,11 +846,30 @@ class DocumentValidator(object):
         :param version: номер версии, например '1.0' или '1.05'
         :return: Exception в случае ошибки валидации
         """
-        schema = self._schemas.get(version)
-        if schema:
-            jsonschema.validate(doc, schema['root'], resolver=schema['resolver'])
+        validator = self._validators.get(version)
+        if validator:
+            validator.validate(doc)
         elif not self._skip_unknown:
             raise ValidationError('Version ' + version + ' is unsupported')
+
+        self._validate_logic(doc)
+
+    def _validate_logic(self, doc):
+        doc_name = next(iter(doc))
+        # проверка, что дата чека не меньше указанной даты
+        doc_timestamp = doc[doc_name].get('dateTime')
+        if self.min_date and self.min_date.timestamp() > doc_timestamp:
+            doc_date = datetime.datetime.fromtimestamp(doc_timestamp)
+            raise ValidationError('Document timestamp ' + str(doc_date) + ' is less than min. allowed date ' +
+                                  str(self.min_date))
+
+        # проверка, что чек может быть "из будущего" только на 24 часа больше UTC
+        future = datetime.datetime.utcnow() + datetime.timedelta(hours=self.future_hours)
+        if doc_timestamp > future.timestamp():
+            doc_date = datetime.datetime.fromtimestamp(doc_timestamp)
+
+            raise ValidationError('Document timestamp {} is greater than now for {} hours'
+                                  .format(str(doc_date), str(self.future_hours)))
 
 
 def _select_tag_by_key(key, docs, parent_ty):
@@ -817,8 +930,17 @@ def pack_json(doc: dict, docs: dict = DOCS_BY_DESC, parent_ty=None) -> bytes:
     return wr
 
 
+MAX_UINT_32 = 2 ** 32 - 1  # максимальное значение 4-байтового uint
+
+
 def extract_fiscal_sign_for_print(full_sign):
-    """Хак. ФПД занимает 6 байт, но на чеке печатаются байты с 2 по 5"""
+    """
+    Хак. ФПД занимает 6 байт, но на чеке печатаются байты с 2 по 5. Если значение full_sign больше 4-байт unit, то
+    выполяем преобразование, иначе возвращаем значение как есть
+    """
+    if full_sign <= MAX_UINT_32:
+        return full_sign
+
     bn = struct.pack('>Q', full_sign)
     data = bn[2:6]
     return struct.unpack('<Q', data + b'\x00' * (8 - len(data)))[0]
@@ -830,13 +952,12 @@ class ProtocolPacker:
         ty, length = struct.unpack('<HH', container_message_raw[:4])
         stlv_doc = DOCUMENTS[ty]
 
+        fps = VLN('fiscalSignOperator', 'фпс для оператора')
+
         container_message = stlv_doc.unpack(container_message_raw[4:4 + length])
         container_message['rawData'] = base64.b64encode(container_message_raw + fiscal_sign).decode('utf8')
-
-        if stlv_doc.name in PAYMENT_DOCUMENTS:
-            container_message[stlv_doc.name + 'Code'] = ty
-        else:
-            container_message['code'] = ty
+        container_message['code'] = ty
+        container_message['messageFiscalSign'] = fps.unpack(fiscal_sign)
 
         # тег 1000 (docName) не включается в док для ФНС
         if 'docName' in container_message:
@@ -852,14 +973,27 @@ class ProtocolPacker:
 
     @classmethod
     def format_message_fields(cls, container_message):
+        if 'fiscalSign' in container_message:
+            container_message['fiscalSign'] = extract_fiscal_sign_for_print(container_message['fiscalSign'])
+
         kkt_reg_id = container_message.get('kktRegId')
         if kkt_reg_id:
-            container_message['kktRegId'] = kkt_reg_id.lstrip().ljust(20)
+            container_message['kktRegId'] = kkt_reg_id.strip()
 
-        inn_fields = ['userInn', 'ofdInn', 'operatorInn']
+        inn_fields = ['userInn', 'ofdInn', 'operatorInn', 'operatorTransportInn']
         for field in inn_fields:
             if field in container_message:
                 container_message[field] = cls._format_inn(container_message[field])
+
+        phone_fields = ['paymentAgentPhone', 'operatorToReceivePhone', 'operatorPhoneToTransfer',
+                        'bankSubagentPhone', 'paymentSubagentPhone']
+
+        for field in phone_fields:
+            if field in container_message:
+                if isinstance(container_message[field], list):
+                    container_message[field] = [cls._format_phone(i) for i in container_message[field]]
+                else:
+                    container_message[field] = cls._format_phone(container_message[field])
 
         return container_message
 
@@ -871,11 +1005,63 @@ class ProtocolPacker:
         inn = inn.strip()
         # некоторые кассы слева пишут нуля для 10-значных ИНН дополняя их до 12 символов
         # это нарушение формата, такие нули должны обрезаться
-        if len(inn) > 10 and inn.startswith('00'):
+        if len(inn) > 10 and inn.startswith('00') and inn != '000000000000':
             inn = inn[2:]
 
-        return inn.ljust(12)
+        return inn
+
+    @classmethod
+    def _format_phone(cls, phone):
+        if not phone:
+            return phone
+
+        phone = re.sub('[^0-9]', '', phone)
+        if not phone:
+            return phone
+
+        return '+' + phone
 
 
 def unpack_container_message(container_message_raw, fiscal_sign):
     return ProtocolPacker.unpack_container_message(container_message_raw, fiscal_sign)
+
+
+def unpack_container_from_base64(container_message_b64, fiscal_sign):
+    raw = base64.b64decode(container_message_b64)
+    return unpack_container_message(raw, fiscal_sign)
+
+
+def get_doc_name(doc):
+    """
+    Get actual document name from dict like {'receipt': {//actual body//}}
+    :param doc: dict like {'doc_name': {//actual body//}}
+    """
+    if doc is None:
+        return None
+    return next(iter(doc))
+
+
+def get_doc_body(doc):
+    """
+    Get actual document body from dict like {'receipt': {//actual body//}}
+    It skips doc_name key and return body object with doc fields
+    :param doc: dict like {'doc_name': {//actual body//}}
+    :return: body object with doc fields
+    """
+    doc_name = get_doc_name(doc)
+    if doc_name is None:
+        return None
+    return doc[doc_name]
+
+
+def get_body_field(doc, field, default=None):
+    """
+    Get field from document body which is like {'receipt': {//actual body//}}
+    It skips doc_name key and return field body object with doc fields
+    :param doc: dict like {'doc_name': {//actual body//}}
+    :param default: default value if field does not exists
+    :param field: name of the body field
+    :return: field from doc['doc_name'] dict or default value
+    """
+    body = get_doc_body(doc)
+    return body.get(field, default)

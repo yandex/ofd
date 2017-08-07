@@ -31,7 +31,7 @@ async def test_ofd_emulation(event_loop):
         assert 'operatorAck' in doc
         assert doc['operatorAck']['fiscalDriveNumber'] == '9999078900005488'
         assert doc['operatorAck']['fiscalDocumentNumber'] == 1
-        assert doc['operatorAck']['ofdInn'] == '7704358518  '
+        assert doc['operatorAck']['ofdInn'] == '7704358518'
         assert doc['operatorAck']['messageToFn'] == {'ofdResponseCode': 0}
     finally:
         server.close()

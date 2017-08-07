@@ -365,25 +365,26 @@ class TestProtocolPack(unittest.TestCase):
                     }
                 ],
                 "operator": "СИС. АДМИНИСТРАТОР",
-                "fiscalSign": 140323280847921,
+                "fiscalSign": 1334812543,
                 "totalSum": 8063,
                 "dateTime": 1481906640,
-                "userInn": "7702203276  ",
+                "userInn": "7702203276",
                 "nds18": 1230,
                 "user": "РАПКАТ-ЦЕНТР",
                 "ecashTotalSum": 7500,
                 "fiscalDriveNumber": "9999078900001366",
                 "shiftNumber": 4,
                 "cashTotalSum": 563,
-                "kktRegId": "0000000003038927    "
+                "kktRegId": "0000000003038927"
             }
         }
         message = pack_json(doc, docs=DOCS_BY_NAME)
         result = unpack_container_message(message, fiscal_sign=b'\x00' * 8)[0]
         doc_name = next(iter(result))
 
-        del result[doc_name]['receiptCode']
+        del result[doc_name]['code']
         del result[doc_name]['rawData']
+        del result[doc_name]['messageFiscalSign']
 
         assert result == doc
 
@@ -399,9 +400,9 @@ class TestProtocolUnpack:
 
         doc = ProtocolPacker.format_message_fields(doc)
 
-        assert '0234523423  ' == doc['userInn']
-        assert '5787888828  ' == doc['ofdInn']
-        assert '5521243423  ' == doc['operatorInn']
+        assert '0234523423' == doc['userInn']
+        assert '5787888828' == doc['ofdInn']
+        assert '5521243423' == doc['operatorInn']
 
 
 if __name__ == '__main__':
