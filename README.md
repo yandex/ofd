@@ -37,6 +37,9 @@ python3.5 setup.py pytest
 ```bash
 python3.5 example/mock_ofd.py --port 12345
 ```
-
+Для запуска под windows
+```
+py -3.5 example/mock_ofd.py --port 12345
+```
 
  
